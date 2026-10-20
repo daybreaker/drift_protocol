@@ -19,7 +19,7 @@ import {
 } from '../engine'
 import { CardView, SuitIcon } from './Card'
 import { DecisionPanel } from './DecisionPanel'
-import { InspectContext, type Inspected } from './inspect'
+import { InspectContext, WhereContext, type Inspected } from './inspect'
 import { actionName, cardImage, cardName, MODULE_NAME, MODULE_PERK, SUIT_NAME, WILD } from './text'
 import type { Session } from './useGame'
 
@@ -42,6 +42,7 @@ export function Game({ session, act, undo, quit }: Props) {
   const { game } = session
   const [selection, setSelection] = useState<Selection>(null)
   const [inspected, setInspected] = useState<Inspected | null>(null)
+  const inspectValue = useMemo(() => ({ inspectedId: inspected?.card.id ?? null, inspect: setInspected }), [inspected])
 
   // Everything the player sees reflects the tentative play while a hand card is selected.
   const view = useMemo(
@@ -76,7 +77,7 @@ export function Game({ session, act, undo, quit }: Props) {
   const over = game.outcome !== null
 
   return (
-    <InspectContext.Provider value={setInspected}>
+    <InspectContext.Provider value={inspectValue}>
       <div className="game">
         <StatusBar game={game} canUndo={session.undo.length > 0} undo={() => { setSelection(null); undo() }} quit={quit} />
 
@@ -86,28 +87,30 @@ export function Game({ session, act, undo, quit }: Props) {
               const slot = ['Airlock', 'Inner Lock', 'Rail', 'Rail', 'Intake'][i]
               const vents = i === 0 || (i === 1 && game.logs.log2 === 'A')
               return (
-                <div key={i} className={`slot ${vents ? 'is-venting' : ''}`}>
-                  {card ? (
-                    <CardView
-                      card={card}
-                      size="sm"
-                      selected={selection?.zone === 'rail' && selection.index === i}
-                      disabled={pending || over}
-                      onClick={() => toggle({ zone: 'rail', index: i })}
-                    >
-                      <span className="cost-tag" data-affordable={can({ type: 'salvage', railIndex: i })}>
-                        {salvageCost(game, i)}
-                      </span>
-                    </CardView>
-                  ) : (
-                    <div className="empty-slot card-sm">Salvaged</div>
-                  )}
-                  <span className="slot-label">
-                    {slot}
-                    {i === 0 && <em> −2</em>}
-                    {i === 1 && <em> −1</em>}
-                  </span>
-                </div>
+                <WhereContext.Provider key={i} value={`in the Cargo Rail (${slot})`}>
+                  <div className={`slot ${vents ? 'is-venting' : ''}`}>
+                    {card ? (
+                      <CardView
+                        card={card}
+                        size="sm"
+                        selected={selection?.zone === 'rail' && selection.index === i}
+                        disabled={pending || over}
+                        onClick={() => toggle({ zone: 'rail', index: i })}
+                      >
+                        <span className="cost-tag" data-affordable={can({ type: 'salvage', railIndex: i })}>
+                          {salvageCost(game, i)}
+                        </span>
+                      </CardView>
+                    ) : (
+                      <div className="empty-slot card-sm">Salvaged</div>
+                    )}
+                    <span className="slot-label">
+                      {slot}
+                      {i === 0 && <em> −2</em>}
+                      {i === 1 && <em> −1</em>}
+                    </span>
+                  </div>
+                </WhereContext.Provider>
               )
             })}
           </div>
@@ -139,17 +142,18 @@ export function Game({ session, act, undo, quit }: Props) {
         <Zone area="modules" title="Modules">
           <div className="modules">
             {SUITS.map((m) => (
-              <ModuleTile
-                key={m}
-                game={game}
-                module={m}
-                selection={selection}
-                onSelectStationed={(cardId) => toggle({ zone: 'module', module: m, cardId })}
-                station={selection?.zone === 'hand' && can({ type: 'station', cardId: selection.cardId, module: m })
-                  ? () => run({ type: 'station', cardId: selection.cardId, module: m })
-                  : undefined}
-                stationCost={selection?.zone === 'hand' ? cost(game.hand.find((c) => c.id === selection.cardId)!.rank) : 0}
-              />
+              <WhereContext.Provider key={m} value={`stationed at the ${MODULE_NAME[m]}`}>
+                <ModuleTile
+                  game={game}
+                  module={m}
+                  selection={selection}
+                  onSelectStationed={(cardId) => toggle({ zone: 'module', module: m, cardId })}
+                  station={selection?.zone === 'hand' && can({ type: 'station', cardId: selection.cardId, module: m })
+                    ? () => run({ type: 'station', cardId: selection.cardId, module: m })
+                    : undefined}
+                  stationCost={selection?.zone === 'hand' ? cost(game.hand.find((c) => c.id === selection.cardId)!.rank) : 0}
+                />
+              </WhereContext.Provider>
             ))}
           </div>
         </Zone>
@@ -222,11 +226,19 @@ export function Game({ session, act, undo, quit }: Props) {
   )
 }
 
+const ZONE_WHERE: Record<string, string> = {
+  rail: 'in the Cargo Rail',
+  threat: 'in the Threat zone',
+  course: 'in the Course',
+  circuit: 'in the Circuit',
+  hand: 'in your hand',
+}
+
 function Zone({ area, title, note, tone, children }: { area: string; title: string; note?: string; tone?: 'danger'; children: ReactNode }) {
   return (
     <section className={`zone zone-${area}`} style={{ gridArea: area }} data-tone={tone}>
       <h2 className="zone-title">{title}</h2>
-      {children}
+      <WhereContext.Provider value={ZONE_WHERE[area]}>{children}</WhereContext.Provider>
       {note && <p className="zone-note">{note}</p>}
     </section>
   )
@@ -559,12 +571,14 @@ function Inspector({ inspected }: { inspected: Inspected | null }) {
   const flipped = inspected.flipped !== turned
   return (
     <aside className="inspector">
+      <p className="inspector-where">
+        <b>{cardName(inspected.card)}: {actionName(inspected.card)}</b>
+        {inspected.where && <span>{inspected.where[0].toUpperCase() + inspected.where.slice(1)}</span>}
+      </p>
       <button type="button" className="inspector-card" onClick={() => setTurned(!turned)} aria-label={`Turn ${cardName(inspected.card)} around`}>
         <img src={cardImage(inspected.card)} alt={`${cardName(inspected.card)}, ${actionName(inspected.card)}`} className={flipped ? 'is-flipped' : ''} />
       </button>
-      <p className="muted">
-        {cardName(inspected.card)}: {actionName(inspected.card)}. Click the card to turn it around.
-      </p>
+      <p className="muted">Click the card to turn it around. The dashed outline on the board marks this card.</p>
     </aside>
   )
 }

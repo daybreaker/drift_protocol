@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
+import { WhereContext } from './inspect'
 import { cardName, MODULE_NAME, SUIT_NAME } from './text'
 
 interface Props {
@@ -18,16 +19,18 @@ export function DecisionPanel({ game, act }: Props) {
   const key = `${game.turn}-${game.circuit.length}-${game.pending.length}-${decision.kind}`
 
   return (
-    <section className="decision" aria-live="polite">
-      {decision.kind === 'chooseResource' && <ChooseResource key={key} decision={decision} {...props} />}
-      {decision.kind === 'scan' && <Scan key={key} decision={decision} {...props} />}
-      {decision.kind === 'chooseCards' && <ChooseCards key={key} decision={decision} {...props} />}
-      {decision.kind === 'tractorBeam' && <TractorBeam key={key} decision={decision} {...props} />}
-      {decision.kind === 'dock' && <Dock key={key} decision={decision} {...props} />}
-      {decision.kind === 'engineer' && <Engineer key={key} decision={decision} {...props} />}
-      {decision.kind === 'log1' && <Log1 key={key} {...props} />}
-      {decision.kind === 'log2' && <Log2 key={key} {...props} />}
-    </section>
+    <WhereContext.Provider value={`shown in the ${decision.kind.startsWith('log') ? 'Log' : 'decision'} panel`}>
+      <section className="decision" aria-live="polite">
+        {decision.kind === 'chooseResource' && <ChooseResource key={key} decision={decision} {...props} />}
+        {decision.kind === 'scan' && <Scan key={key} decision={decision} {...props} />}
+        {decision.kind === 'chooseCards' && <ChooseCards key={key} decision={decision} {...props} />}
+        {decision.kind === 'tractorBeam' && <TractorBeam key={key} decision={decision} {...props} />}
+        {decision.kind === 'dock' && <Dock key={key} decision={decision} {...props} />}
+        {decision.kind === 'engineer' && <Engineer key={key} decision={decision} {...props} />}
+        {decision.kind === 'log1' && <Log1 key={key} {...props} />}
+        {decision.kind === 'log2' && <Log2 key={key} {...props} />}
+      </section>
+    </WhereContext.Provider>
   )
 }
 

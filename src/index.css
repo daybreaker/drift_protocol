@@ -118,6 +118,15 @@ button.card:disabled { cursor: default; }
 .card.is-selected .card-face { box-shadow: 0 0 0 2px var(--ink), 0 10px 22px rgb(0 0 0 / 0.5); }
 .card.is-ghost .card-face { box-shadow: 0 0 0 2px var(--suit), 0 0 22px color-mix(in srgb, var(--suit) 45%, transparent); }
 .card.is-dim { opacity: 0.4; }
+/* The card the inspector is showing. The inspector's own card wears the same dashed frame. */
+.card.is-inspected::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 1.5px dashed var(--ink);
+  border-radius: calc(var(--w) * 0.07 + 6px);
+  pointer-events: none;
+}
 .card.is-tucked { aspect-ratio: 5 / 2.3; }
 .card.is-tucked img { height: auto; }
 
@@ -375,7 +384,11 @@ button.card:disabled { cursor: default; }
 
 /* Inspector */
 .inspector { grid-area: inspector; position: sticky; top: 12px; align-self: start; display: flex; flex-direction: column; gap: 10px; }
-.inspector-card { padding: 0; border: 0; background: none; cursor: pointer; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgb(0 0 0 / 0.45); }
+.inspector-card { padding: 0; border: 0; background: none; cursor: pointer; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgb(0 0 0 / 0.45); outline: 1.5px dashed var(--ink); outline-offset: 6px; }
+.inspector-card:focus-visible { outline: 2px solid var(--data); }
+.inspector-where { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.inspector-where b { font: 600 16px var(--display); }
+.inspector-where span { color: var(--muted); font-size: 12px; }
 .inspector-card img { display: block; width: 100%; transition: rotate var(--turn); }
 .inspector-card img.is-flipped { rotate: 180deg; }
 .inspector .muted { font-size: 12px; }
