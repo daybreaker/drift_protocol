@@ -224,7 +224,7 @@ button.card:disabled { cursor: default; }
 
 /* Cargo Rail: the Intake is the left end and the Airlock the right, beside the Threat zone it vents into. */
 .zone-rail { grid-area: rail; }
-.rail { display: flex; justify-content: safe flex-end; gap: 12px; overflow-x: auto; padding: 6px 4px 4px; }
+.rail { display: flex; justify-content: safe center; gap: 12px; overflow-x: auto; padding: 6px 4px 4px; }
 .slot { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .slot-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .slot-label em { font-style: normal; color: var(--ink); }
