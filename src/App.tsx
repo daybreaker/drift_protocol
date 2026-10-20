@@ -1,9 +1,8 @@
+import { Game } from './ui/Game'
+import { StartScreen } from './ui/StartScreen'
+import { useGame } from './ui/useGame'
+
 export default function App() {
-  return (
-    <main className="placeholder">
-      <h1>Drift Protocol</h1>
-      <p>The rules engine is being built test-first. The playable board comes next.</p>
-      <img src="/cards/Crew-05.jpg" alt="5 Crew, Recruit" width={250} />
-    </main>
-  )
+  const { session, act, undo, start, quit } = useGame()
+  return session ? <Game session={session} act={act} undo={undo} quit={quit} /> : <StartScreen start={start} />
 }

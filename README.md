@@ -4,7 +4,7 @@ A solo sci-fi deck-builder where every card is either a resource or an action, a
 
 ## Status
 
-The rules engine in `src/engine/` is complete and the suite in `src/engine/__tests__` is green, including bot playthroughs that check every listed action applies, `apply` never mutates its input, and all 48 cards stay accounted for. Next: the board UI.
+The rules engine in `src/engine/` is complete and the suite in `src/engine/__tests__` is green, including bot playthroughs that check every listed action applies, `apply` never mutates its input, and all 48 cards stay accounted for. The board UI is playable: `npm run dev`, choose a difficulty and starting 3s, and play. A game in progress is saved in the browser, and Undo steps back within the current turn.
 
 ## Commands
 
@@ -23,6 +23,7 @@ npm run dev         # Vite dev server
 | `docs/engine-spec.md` | State shape, actions, turn sequence and rulings. The source of truth for the engine. |
 | `src/engine/` | Pure TypeScript rules engine: `newGame`, `legalActions`, `apply`, `previewPlay` in `engine.ts`; shared queries in `rules.ts`, card actions and decisions in `effects.ts`, end of turn in `turn.ts`. No UI imports. |
 | `src/engine/__tests__/` | Vitest specs, one file per area (setup, chaining, actions, spending, end of turn, jumps), plus bot playthroughs. |
+| `src/ui/` | React board: `Game.tsx` (zones, selection and tray), `DecisionPanel.tsx` (card and Log choices), `StartScreen.tsx`, `useGame.ts` (session, undo, saving), `summary.ts` (end-of-turn report). |
 | `public/cards/` | Card art: 48 numbered cards and 4 Modules, 1000×1400 JPG. |
 | `tools/make_cards.py` | Regenerates the card JPGs (Playwright + Pillow). |
 
