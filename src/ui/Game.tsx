@@ -218,7 +218,7 @@ export function Game({ session, act, undo, quit }: Props) {
           </div>
         </Zone>
 
-        <Inspector card={inspected} view={view} />
+        <Inspector card={inspected} game={game} view={view} selection={selection} setSelection={setSelection} run={run} can={can} />
         {game.outcome && <Outcome game={game} quit={quit} />}
       </div>
     </InspectContext.Provider>
@@ -417,7 +417,7 @@ function Tray({ game, view, selection, setSelection, run, can }: {
         </div>
         <div className="tray-buttons">
           <button type="button" className="btn btn-primary" onClick={() => run({ type: 'playCard', cardId: card.id, side: selection.side })}>
-            Play {selection.side === 'resource' ? `for ${SUIT_NAME[card.suit]}` : actionName(card)}
+            {playLabel(card, selection.side)}
           </button>
           {can(plotFromHand) && (
             <button type="button" className="btn" onClick={() => run(plotFromHand)}>Plot from hand for 2 Data</button>
@@ -435,7 +435,7 @@ function Tray({ game, view, selection, setSelection, run, can }: {
     return (
       <TrayMessage
         text={`Salvage ${cardName(card)} into your discard pile for ${amount}: ${payWith(card.suit, 'salvage')}.`}
-        problem={can(action) ? undefined : `You have ${game.pool[card.suit]} ${SUIT_NAME[card.suit]}${card.suit === 'power' ? '' : ` and ${game.pool.power} Power`}.`}
+        problem={can(action) ? undefined : youHave(game, card.suit, 'salvage')}
         buttons={[{ label: `Salvage for ${amount}`, action }]}
         run={run}
         cancel={() => setSelection(null)}
@@ -452,7 +452,7 @@ function Tray({ game, view, selection, setSelection, run, can }: {
     return (
       <TrayMessage
         text={`Neutralize ${cardName(card)} for ${amount}: ${payWith(card.suit, 'neutralize')}. You can take it into your discard pile or archive it.`}
-        problem={can(keep) ? undefined : `You have ${game.pool[card.suit]} ${SUIT_NAME[card.suit]}${card.suit === 'shields' ? '' : ` and ${game.pool.shields} Shields`}.`}
+        problem={can(keep) ? undefined : youHave(game, card.suit, 'neutralize')}
         buttons={[{ label: 'Neutralize and keep it', action: keep }, { label: 'Neutralize and archive it', action: archive }]}
         run={run}
         cancel={() => setSelection(null)}
@@ -501,6 +501,12 @@ function Tray({ game, view, selection, setSelection, run, can }: {
   )
 }
 
+/** What the pool holds toward a cost: the exact suit and, if different, the wild. */
+const youHave = (game: GameState, suit: Suit, kind: keyof typeof WILD) =>
+  `You have ${game.pool[suit]} ${SUIT_NAME[suit]}${suit === WILD[kind] ? '' : ` and ${game.pool[WILD[kind]]} ${SUIT_NAME[WILD[kind]]}`}.`
+
+const playLabel = (card: Card, side: Side) => `Play ${side === 'resource' ? `for ${SUIT_NAME[card.suit]}` : actionName(card)}`
+
 const payWith = (suit: Suit, kind: keyof typeof WILD) =>
   suit === WILD[kind] ? `pay ${SUIT_NAME[suit]}` : `pay ${SUIT_NAME[suit]} first, then ${SUIT_NAME[WILD[kind]]}`
 
@@ -545,7 +551,15 @@ function EndTurn({ game, run }: { game: GameState; run: (a: Action) => void }) {
   )
 }
 
-function Inspector({ card, view }: { card: Card | null; view: GameState }) {
+function Inspector({ card, game, view, selection, setSelection, run, can }: {
+  card: Card | null
+  game: GameState
+  view: GameState
+  selection: Selection
+  setSelection: (s: Selection) => void
+  run: (a: Action) => void
+  can: (a: Action) => boolean
+}) {
   // Orientation and location come from the board as it is now, so a card turned in the Circuit
   // (or in the preview) is turned here too. Clicking turns it the other way until either changes.
   const { where, flipped: lies } = card ? locate(view, card.id) : { where: undefined, flipped: false }
@@ -563,19 +577,77 @@ function Inspector({ card, view }: { card: Card | null; view: GameState }) {
       </aside>
     )
   }
-  const flipped = lies !== turned
+
+  // While this card is the tentative play, turning it here chooses which side gets played.
+  const previewing = selection?.zone === 'hand' && selection.cardId === card.id ? selection : null
+  const turn = previewing
+    ? () => setSelection({ ...previewing, side: previewing.side === 'resource' ? 'action' : 'resource' })
+    : () => setTurned(!turned)
+  const flipped = previewing ? lies : lies !== turned
+
   return (
     <aside className="inspector">
       <p className="inspector-where">
         <b>{cardName(card)}: {actionName(card)}</b>
         {where && <span>{where}{lies && ', played action side up'}</span>}
       </p>
-      <button type="button" className="inspector-card" onClick={() => setTurned(!turned)} aria-label={`Turn ${cardName(card)} around`}>
+      <button type="button" className="inspector-card" onClick={turn} aria-label={previewing ? `Play the other side of ${cardName(card)}` : `Turn ${cardName(card)} around`}>
         <img src={cardImage(card)} alt={`${cardName(card)}, ${actionName(card)}`} className={flipped ? 'is-flipped' : ''} />
       </button>
-      <p className="muted">Click the card to turn it around. The dashed outline on the board marks this card.</p>
+      <InspectorActions card={card} game={game} previewing={previewing} setSelection={setSelection} run={run} can={can} />
+      <p className="muted">
+        {previewing ? 'Click the card to play its other side.' : 'Click the card to turn it around.'} The dashed outline on the board marks this card.
+      </p>
     </aside>
   )
+}
+
+function InspectorActions({ card, game, previewing, setSelection, run, can }: {
+  card: Card
+  game: GameState
+  previewing: Extract<Selection, { zone: 'hand' }> | null
+  setSelection: (s: Selection) => void
+  run: (a: Action) => void
+  can: (a: Action) => boolean
+}) {
+  const blocked = game.pending.length > 0 || game.outcome !== null
+
+  if (previewing) {
+    return (
+      <div className="inspector-actions">
+        <button type="button" className="btn btn-primary" onClick={() => run({ type: 'playCard', cardId: card.id, side: previewing.side })}>
+          {playLabel(card, previewing.side)}
+        </button>
+        <button type="button" className="btn" onClick={() => setSelection(null)}>Cancel</button>
+      </div>
+    )
+  }
+
+  if (game.hand.some((c) => c.id === card.id)) {
+    return (
+      <div className="inspector-actions">
+        <button type="button" className="btn btn-primary" disabled={blocked} onClick={() => setSelection({ zone: 'hand', cardId: card.id, side: 'resource' })}>
+          Add to Circuit
+        </button>
+      </div>
+    )
+  }
+
+  const railIndex = game.rail.findIndex((c) => c?.id === card.id)
+  if (railIndex >= 0) {
+    const action: Action = { type: 'salvage', railIndex }
+    const affordable = can(action)
+    return (
+      <div className="inspector-actions">
+        <button type="button" className="btn btn-primary" disabled={!affordable} onClick={() => run(action)}>
+          Salvage for {salvageCost(game, railIndex)}
+        </button>
+        {!affordable && !blocked && <p className="inspector-problem">{youHave(game, card.suit, 'salvage')}</p>}
+      </div>
+    )
+  }
+
+  return null
 }
 
 function Outcome({ game, quit }: { game: GameState; quit: () => void }) {
