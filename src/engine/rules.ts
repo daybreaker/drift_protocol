@@ -59,10 +59,16 @@ export function salvagePayment(s: GameState, railIndex: number, extraDiscount = 
   return pay(s.pool, amount, card.suit, 'power')
 }
 
-export function neutralizePayment(s: GameState, threatIndex: number): Pool | null {
+export function neutralizeCost(s: GameState, threatIndex: number): number | null {
   const card = s.threat[threatIndex]
   if (!card) return null
-  const amount = Math.max(0, cost(card.rank) - s.turnFlags.patchDiscount) + (s.logs.log2 === 'B' ? 1 : 0)
+  return Math.max(0, cost(card.rank) - s.turnFlags.patchDiscount) + (s.logs.log2 === 'B' ? 1 : 0)
+}
+
+export function neutralizePayment(s: GameState, threatIndex: number): Pool | null {
+  const card = s.threat[threatIndex]
+  const amount = neutralizeCost(s, threatIndex)
+  if (!card || amount === null) return null
   return pay(s.pool, amount, card.suit, 'shields')
 }
 

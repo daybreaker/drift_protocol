@@ -91,7 +91,8 @@ const canPlotFromHand = (s: GameState, cardId: string) =>
 const canRecall = (s: GameState, module: Suit, cardId: string) =>
   !s.turnFlags.playedOrSpent && s.modules[module].stationed.some((c) => c.id === cardId)
 
-function isLegal(s: GameState, action: Action): boolean {
+/** Whether `apply` would accept this action. */
+export function isLegal(s: GameState, action: Action): boolean {
   if (s.outcome) return false
   if (s.pending.length > 0) return action.type === 'resolve' && isValidChoice(s, s.pending[0], action.choice)
   switch (action.type) {

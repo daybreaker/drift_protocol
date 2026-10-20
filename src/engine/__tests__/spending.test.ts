@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { apply, IllegalActionError } from '../engine'
+import { neutralizeCost } from '../rules'
 import type { GameState } from '../types'
 import { c, entry, pool, state } from './helpers'
 
@@ -42,6 +43,12 @@ describe('Neutralize', () => {
   it('costs 1 more after Log 2B', () => {
     const s = state({ threat, pool: pool({ shields: 5 }), logs: { log2: 'B' } })
     expect(() => apply(s, { type: 'neutralize', threatIndex: 0, keep: 'archive' })).toThrow(IllegalActionError)
+  })
+
+  it('reports its cost after Patch and Log 2B', () => {
+    const base = state({ threat, logs: { log2: 'B' } })
+    expect(neutralizeCost(base, 0)).toBe(6)
+    expect(neutralizeCost({ ...base, turnFlags: { ...base.turnFlags, patchDiscount: 2 } }, 0)).toBe(4)
   })
 
   it('cannot be paid with Power', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { legalActions } from '../engine'
+import { isLegal, legalActions, newGame } from '../engine'
 import { c, pool, state } from './helpers'
 
 describe('legalActions', () => {
@@ -27,5 +27,11 @@ describe('legalActions', () => {
 
   it('offers nothing once the game is over', () => {
     expect(legalActions(state({ hand: [c('data', 8)], outcome: { result: 'lost', reason: 'breach' } }))).toEqual([])
+  })
+
+  it('isLegal agrees with the listed actions', () => {
+    const s = newGame({ seed: 3 })
+    expect(legalActions(s).every((a) => isLegal(s, a))).toBe(true)
+    expect(isLegal(s, { type: 'plot', circuitIndex: 0 })).toBe(false)
   })
 })
