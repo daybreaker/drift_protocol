@@ -1,4 +1,5 @@
 import { cost, fullDeck, yieldOf } from './cards'
+import { choicesFor, isValidChoice, resolveDecision, runAction } from './effects'
 import { IllegalActionError } from './errors'
 import { shuffle } from './rng'
 import {
@@ -97,7 +98,7 @@ const canRecall = (s: GameState, module: Suit, cardId: string) =>
 
 function isLegal(s: GameState, action: Action): boolean {
   if (s.outcome) return false
-  if (s.pending.length > 0) return action.type === 'resolve'
+  if (s.pending.length > 0) return action.type === 'resolve' && isValidChoice(s, s.pending[0], action.choice)
   switch (action.type) {
     case 'playCard':
       return inHand(s, action.cardId)
@@ -123,7 +124,7 @@ function isLegal(s: GameState, action: Action): boolean {
 export function legalActions(state: GameState): Action[] {
   const s = state
   if (s.outcome) return []
-  if (s.pending.length > 0) return []
+  if (s.pending.length > 0) return choicesFor(s, s.pending[0]).map((choice) => ({ type: 'resolve', choice }))
 
   const actions: Action[] = []
   for (const card of s.hand) {
@@ -179,7 +180,9 @@ export function apply(state: GameState, action: Action): GameState {
 
   switch (action.type) {
     case 'playCard': {
-      place(s, action.cardId, action.side)
+      const position = place(s, action.cardId, action.side)
+      const { card, synced } = s.circuit[position]
+      if (action.side === 'action') runAction(s, card.rank, synced, position)
       break
     }
     case 'salvage': {
@@ -226,7 +229,8 @@ export function apply(state: GameState, action: Action): GameState {
       break
     }
     case 'resolve':
-      throw new NotImplementedError('resolve')
+      resolveDecision(s, action.choice)
+      break
     case 'endTurn':
       throw new NotImplementedError('endTurn')
   }
