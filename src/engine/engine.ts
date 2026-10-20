@@ -2,6 +2,7 @@ import { cost, fullDeck, yieldOf } from './cards'
 import { choicesFor, isValidChoice, resolveDecision, runAction } from './effects'
 import { IllegalActionError } from './errors'
 import { shuffle } from './rng'
+import { endTurn } from './turn'
 import {
   canStationAt,
   emptyPool,
@@ -16,12 +17,6 @@ import {
 import { SUITS, type Action, type GameOptions, type GameState, type Side, type Suit } from './types'
 
 export { IllegalActionError }
-
-class NotImplementedError extends Error {
-  constructor(name: string) {
-    super(`${name} is not implemented yet`)
-  }
-}
 
 /** A blank board: no cards anywhere, empty pool, Standard options. Used by setup and tests. */
 export function emptyState(): GameState {
@@ -232,7 +227,8 @@ export function apply(state: GameState, action: Action): GameState {
       resolveDecision(s, action.choice)
       break
     case 'endTurn':
-      throw new NotImplementedError('endTurn')
+      endTurn(s)
+      break
   }
   return s
 }

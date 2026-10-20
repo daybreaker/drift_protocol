@@ -159,3 +159,9 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 8. **Scan** looks at fewer cards if the deck has fewer than 3; it never reshuffles.
 9. **Jettison** and **Navigator** may choose zero cards.
 10. Stationing a card is not a play: it is not added to the Circuit and does not affect Sync or Cascade.
+11. **Recall** empties that Module's production for the turn: the whole amount it produced at Systems Online is refunded, even if another card stays stationed there (rulebook: "that Module produces nothing this turn").
+12. **Patch** stacks: each Patch played or copied this turn takes another 2 off neutralizing.
+13. **Engineer** may copy a Circuit card played on either side. With nothing it can copy, it does nothing.
+14. **Dock's** Sync makes the Module produce for every card stationed there, not only the new one.
+15. **Log 2A** vents the Inner Lock every Drift, even on a turn when the Airlock card was salvaged.
+16. **Shield Array's** +1 Breach limit is checked after Impact moves the hazards, so a Shields hazard hitting this turn does not take it offline for that check.
