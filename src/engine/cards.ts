@@ -1,0 +1,39 @@
+import { SUITS, type Card, type Suit } from './types'
+
+export const ACTION_NAMES: Record<number, string> = {
+  1: 'Scrounge',
+  2: 'Patch',
+  3: 'Scan',
+  4: 'Jettison',
+  5: 'Recruit',
+  6: 'Tractor Beam',
+  7: 'Dock',
+  8: 'Relay',
+  9: 'Overdrive',
+  10: 'Engineer',
+  11: 'Navigator',
+  12: 'Captain',
+}
+
+export const JUMP_THRESHOLDS = [11, 20, 30] as const
+
+export function cost(rank: number): number {
+  if (rank <= 4) return 2
+  if (rank <= 8) return 3
+  return 5
+}
+
+export function yieldOf(rank: number): number {
+  if (rank <= 4) return 1
+  if (rank <= 8) return 2
+  return 3
+}
+
+export function makeCard(suit: Suit, rank: number): Card {
+  return { id: `${suit}-${String(rank).padStart(2, '0')}`, suit, rank }
+}
+
+/** All 48 numbered cards, ordered by suit then rank. */
+export function fullDeck(): Card[] {
+  return SUITS.flatMap((suit) => Array.from({ length: 12 }, (_, i) => makeCard(suit, i + 1)))
+}

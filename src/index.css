@@ -1,0 +1,3 @@
+:root { color-scheme: dark; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+body { margin: 0; background: #0a0f18; color: #e8eef7; }
+.placeholder { max-width: 640px; margin: 64px auto; padding: 0 16px; }
