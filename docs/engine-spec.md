@@ -2,7 +2,7 @@
 
 The rules engine is pure TypeScript with no UI. Every rule lives here; the React app only renders state and sends actions.
 
-Source of truth for the rules: the Drift Protocol rulebook (Notion: Projects › DRIFT PROTOCOL › Rules). Where the rulebook is silent, the **Rulings** section below decides.
+Source of truth for the rules: the Drift Protocol rulebook in Notion ([DRIFT PROTOCOL](https://app.notion.com/p/3ff7f436dffd813aba57def170b1571e) › Rules). Where the rulebook is silent, the **Rulings** section below decides.
 
 ## Core contract
 

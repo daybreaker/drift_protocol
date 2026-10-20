@@ -28,4 +28,4 @@ npm run dev         # Vite dev server
 
 ## Rules
 
-The full rulebook lives in Notion under Projects › DRIFT PROTOCOL. Where it is silent, `docs/engine-spec.md` § Rulings decides.
+The design lives in Notion: [DRIFT PROTOCOL](https://app.notion.com/p/3ff7f436dffd813aba57def170b1571e), with the Rules, Playtest Rules (Standard Deck) and Card Design pages under it. Where the rulebook is silent, `docs/engine-spec.md` § Rulings decides.

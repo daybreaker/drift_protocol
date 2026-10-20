@@ -1,6 +1,7 @@
 # Working in this repo
 
 - Work test-first. Add or change a test in `src/engine/__tests__/` before changing engine behavior, and keep `npm test` and `npm run typecheck` passing when you finish.
+- The game design and full rulebook live in Notion: https://app.notion.com/p/3ff7f436dffd813aba57def170b1571e (Rules, Playtest Rules, Card Design). Use it for background; the spec below governs the engine.
 - `docs/engine-spec.md` is the source of truth for rules. If a test and the spec disagree, ask before changing either. New rulings go in its Rulings section.
 - The engine in `src/engine/` is pure: `apply` must never mutate its input, all randomness goes through `src/engine/rng.ts` with the RNG state stored in `GameState`, and no file there imports React or the DOM.
 - TypeScript is configured with `erasableSyntaxOnly`: use string unions, not `enum`.
