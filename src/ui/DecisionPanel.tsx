@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
-import { cardName, MODULE_NAME, SUIT_NAME } from './text'
+import { cardName, MODULE_NAME, railLeftToRight, SUIT_NAME } from './text'
 
 interface Props {
   game: GameState
@@ -193,7 +193,7 @@ function TractorBeam({ game, decision, resolve, valid }: FormProps<'tractorBeam'
         Salvage a Cargo Rail card for 2 less. It goes {decision.toHand ? 'into your hand' : 'on top of your deck'}.
       </Prompt>
       <div className="decision-row">
-        {game.rail.map((card, railIndex) =>
+        {railLeftToRight(game.rail).map(([card, railIndex]) =>
           card ? (
             <div key={card.id} className="pick">
               <CardView
@@ -326,7 +326,7 @@ function Log2({ game, resolve, valid }: { game: GameState; resolve: (c: Decision
           <h3>Board it</h3>
           <p>Take any 2 Cargo Rail cards into your hand now. From now on, Drift vents both the Airlock and the Inner Lock each turn.</p>
           <div className="decision-row">
-            {game.rail.map((card, i) =>
+            {railLeftToRight(game.rail).map(([card, i]) =>
               card ? <CardView key={card.id} card={card} size="xs" selected={rail.includes(i)} onClick={() => toggleRail(i)} /> : null,
             )}
           </div>

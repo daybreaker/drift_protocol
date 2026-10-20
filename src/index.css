@@ -222,14 +222,14 @@ button.card:disabled { cursor: default; }
 .pip-breach { width: 7px; height: 14px; border: 1.5px solid color-mix(in srgb, var(--danger) 70%, var(--line)); border-radius: 2px; }
 .pip-breach.is-on { background: var(--danger); border-color: var(--danger); }
 
-/* Cargo Rail: the Airlock is the left end, cards slide left toward it. */
+/* Cargo Rail: the Intake is the left end and the Airlock the right, beside the Threat zone it vents into. */
 .zone-rail { grid-area: rail; }
-.rail { display: flex; gap: 12px; overflow-x: auto; padding: 6px 4px 4px; }
+.rail { display: flex; justify-content: safe flex-end; gap: 12px; overflow-x: auto; padding: 6px 4px 4px; }
 .slot { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .slot-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .slot-label em { font-style: normal; color: var(--ink); }
 .slot.is-venting .slot-label { color: var(--danger); }
-.slot.is-venting .slot-label::before { content: '◀ '; }
+.slot.is-venting .slot-label::after { content: ' ▶'; }
 
 .zone-threat { grid-area: threat; }
 .zone-threat .row { padding-top: 6px; }

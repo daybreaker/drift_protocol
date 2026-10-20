@@ -22,7 +22,7 @@ import { CardView, SuitIcon } from './Card'
 import { DecisionPanel } from './DecisionPanel'
 import { InspectContext } from './inspect'
 import { locate } from './locate'
-import { actionName, cardImage, cardName, MODULE_NAME, MODULE_PERK, RAIL_SLOTS, SUIT_NAME, WILD } from './text'
+import { actionName, cardImage, cardName, MODULE_NAME, MODULE_PERK, RAIL_SLOTS, railLeftToRight, SUIT_NAME, WILD } from './text'
 import type { Session } from './useGame'
 
 type Selection =
@@ -85,7 +85,7 @@ export function Game({ session, act, undo, quit }: Props) {
 
         <Zone area="rail" title="Cargo Rail" note={game.calm ? 'Calm start: drifting cards are debris until your first reshuffle.' : undefined}>
           <div className="rail">
-            {game.rail.map((card, i) => {
+            {railLeftToRight(game.rail).map(([card, i]) => {
               const slot = RAIL_SLOTS[i]
               const vents = i === 0 || (i === 1 && game.logs.log2 === 'A')
               return (

@@ -16,8 +16,11 @@ export const MODULE_PERK: Record<Suit, string> = {
   shields: 'Breach limit +1',
 }
 
-/** Cargo Rail slot names by index; cards slide toward the Airlock. */
+/** Cargo Rail slot names by engine index; cards slide toward the Airlock. */
 export const RAIL_SLOTS = ['Airlock', 'Inner Lock', 'Rail', 'Rail', 'Intake'] as const
+
+/** Rail slots in screen order, left to right: the Intake first, the Airlock last, next to the Threat zone it vents into. */
+export const railLeftToRight = <T,>(rail: T[]): [T, number][] => rail.map((x, i): [T, number] => [x, i]).reverse()
 
 /** The wild resource for each kind of payment. */
 export const WILD = { salvage: 'power', neutralize: 'shields' } as const
