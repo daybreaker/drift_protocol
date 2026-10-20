@@ -1,6 +1,6 @@
 import { useContext, type ReactNode } from 'react'
 import type { Card, Suit } from '../engine'
-import { InspectContext, WhereContext } from './inspect'
+import { InspectContext } from './inspect'
 import { actionName, cardImage, cardName } from './text'
 
 // Same glyphs as the printed cards (tools/make_cards.py).
@@ -42,7 +42,6 @@ interface CardViewProps {
 
 export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tucked, onClick, disabled, children }: CardViewProps) {
   const { inspectedId, inspect } = useContext(InspectContext)
-  const where = useContext(WhereContext)
   const className = [
     'card',
     `card-${size}`,
@@ -64,7 +63,7 @@ export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tuc
       {children}
     </>
   )
-  const show = () => inspect({ card, flipped: !!flipped, where })
+  const show = () => inspect(card)
 
   if (onClick) {
     return (
