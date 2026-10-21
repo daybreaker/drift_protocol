@@ -8,21 +8,21 @@ const debrisRail = () => [c('crew', 1), c('crew', 6), c('data', 7), c('power', 3
 const board = (o: Partial<GameState> = {}) =>
   state({ calm: false, rail: debrisRail(), yard: filler(10, 'data'), deck: filler(10), ...o })
 
-const course11 = [c('power', 3), c('crew', 3), c('data', 3), c('shields', 2)]
+const course14 = [c('power', 4), c('crew', 4), c('data', 3), c('shields', 3)]
 
 describe('Jump check at cleanup', () => {
   it('Jumps when the Course holds every suit and enough rank', () => {
-    const s = end(board({ course: course11, threat: [], breach: [] }))
+    const s = end(board({ course: course14, threat: [], breach: [] }))
     expect(s.jumps).toBe(1)
     expect(s.course).toEqual([])
-    expect(s.archive.map((x) => x.id)).toEqual(expect.arrayContaining(course11.map((x) => x.id)))
+    expect(s.archive.map((x) => x.id)).toEqual(expect.arrayContaining(course14.map((x) => x.id)))
     expect(s.pending).toEqual([{ kind: 'log1' }])
   })
 
   it('Archives the Threat zone on a Jump', () => {
     const r = debrisRail()
     r[0] = c('data', 12)
-    const s = end(board({ rail: r, course: course11 }))
+    const s = end(board({ rail: r, course: course14 }))
     expect(s.threat).toEqual([])
   })
 
@@ -31,19 +31,19 @@ describe('Jump check at cleanup', () => {
     expect(s.jumps).toBe(0)
   })
 
-  it('does not Jump below the threshold', () => {
-    const s = end(board({ course: [c('power', 3), c('crew', 3), c('data', 2), c('shields', 2)] }))
+  it('does not Jump below the threshold of 14 for Jump 1', () => {
+    const s = end(board({ course: [c('power', 4), c('crew', 3), c('data', 3), c('shields', 3)] }))
     expect(s.jumps).toBe(0)
   })
 
   it('Veteran adds 5 to each threshold', () => {
-    const s = end(board({ course: course11, options: { breachLimit: 4, jumpBonus: 5 } }))
+    const s = end(board({ course: course14, options: { breachLimit: 4, jumpBonus: 5 } }))
     expect(s.jumps).toBe(0)
   })
 })
 
 describe('Log 1', () => {
-  const afterJump = () => end(board({ course: course11, breach: [c('crew', 9), c('power', 6)] }))
+  const afterJump = () => end(board({ course: course14, breach: [c('crew', 9), c('power', 6)] }))
 
   it('A: a chosen Module can hold two stationed cards', () => {
     const s = resolve(afterJump(), { kind: 'log1', option: 'A', module: 'data' })

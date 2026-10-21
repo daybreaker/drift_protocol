@@ -97,23 +97,33 @@ describe('Station', () => {
 })
 
 describe('Plot', () => {
-  it('costs 2 Data and marks a Circuit card for the Course', () => {
-    const s = apply(state({ circuit: [entry(c('power', 5), 'resource')], pool: pool({ data: 2 }) }), { type: 'plot', circuitIndex: 0 })
+  it("costs the card's Cost in Data and marks a Circuit card for the Course", () => {
+    const s = apply(state({ circuit: [entry(c('power', 5), 'resource')], pool: pool({ data: 4 }) }), { type: 'plot', circuitIndex: 0 })
     expect(s.circuit[0].plotted).toBe(true)
-    expect(s.pool.data).toBe(0)
+    expect(s.pool.data).toBe(1)
+  })
+
+  it('cannot plot a card whose Cost the Data pool cannot cover', () => {
+    const s = state({ circuit: [entry(c('power', 12), 'resource')], pool: pool({ data: 4, power: 9 }) })
+    expect(() => apply(s, { type: 'plot', circuitIndex: 0 })).toThrow(IllegalActionError)
+    const low = state({ circuit: [entry(c('power', 4), 'resource')], pool: pool({ data: 2 }) })
+    expect(apply(low, { type: 'plot', circuitIndex: 0 }).pool.data).toBe(0)
   })
 
   it('cannot plot the same card twice', () => {
-    const s = state({ circuit: [entry(c('power', 5), 'resource', { plotted: true })], pool: pool({ data: 2 }) })
+    const s = state({ circuit: [entry(c('power', 5), 'resource', { plotted: true })], pool: pool({ data: 9 }) })
     expect(() => apply(s, { type: 'plot', circuitIndex: 0 })).toThrow(IllegalActionError)
   })
 
-  it('can plot from hand only with the Nav Core staffed', () => {
+  it('can plot from hand only with the Nav Core staffed, for the same Data cost', () => {
     const card = c('power', 5)
-    const s = state({ hand: [card], pool: pool({ data: 2 }) })
+    const s = state({ hand: [card], pool: pool({ data: 3 }) })
     expect(() => apply(s, { type: 'plotFromHand', cardId: card.id })).toThrow(IllegalActionError)
     const staffed = withModules(s, { data: { stationed: [c('crew', 1)], capacity: 1 } })
-    expect(apply(staffed, { type: 'plotFromHand', cardId: card.id }).course).toEqual([card])
+    const plotted = apply(staffed, { type: 'plotFromHand', cardId: card.id })
+    expect(plotted.course).toEqual([card])
+    expect(plotted.pool.data).toBe(0)
+    expect(() => apply({ ...staffed, pool: pool({ data: 2 }) }, { type: 'plotFromHand', cardId: card.id })).toThrow(IllegalActionError)
   })
 })
 

@@ -82,11 +82,16 @@ function canStation(s: GameState, cardId: string, module: Suit): boolean {
   return !!card && canStationAt(s, module) && s.pool.crew >= cost(card.rank)
 }
 
-const canPlot = (s: GameState, circuitIndex: number) =>
-  !!s.circuit[circuitIndex] && !s.circuit[circuitIndex].plotted && s.pool.data >= 2
+/** Ruling 18: plotting costs the card's Cost, in Data only. */
+const canPlot = (s: GameState, circuitIndex: number) => {
+  const e = s.circuit[circuitIndex]
+  return !!e && !e.plotted && s.pool.data >= cost(e.card.rank)
+}
 
-const canPlotFromHand = (s: GameState, cardId: string) =>
-  inHand(s, cardId) && perkActive(s, 'data') && s.pool.data >= 2
+const canPlotFromHand = (s: GameState, cardId: string) => {
+  const card = s.hand.find((c) => c.id === cardId)
+  return !!card && perkActive(s, 'data') && s.pool.data >= cost(card.rank)
+}
 
 const canRecall = (s: GameState, module: Suit, cardId: string) =>
   !s.turnFlags.playedOrSpent && s.modules[module].stationed.some((c) => c.id === cardId)
@@ -203,14 +208,16 @@ export function apply(state: GameState, action: Action): GameState {
       break
     }
     case 'plot': {
-      s.pool.data -= 2
-      s.circuit[action.circuitIndex].plotted = true
+      const e = s.circuit[action.circuitIndex]
+      s.pool.data -= cost(e.card.rank)
+      e.plotted = true
       s.turnFlags.playedOrSpent = true
       break
     }
     case 'plotFromHand': {
-      s.pool.data -= 2
-      s.course.push(takeFromHand(s, action.cardId))
+      const card = takeFromHand(s, action.cardId)
+      s.pool.data -= cost(card.rank)
+      s.course.push(card)
       s.turnFlags.playedOrSpent = true
       break
     }

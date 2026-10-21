@@ -91,7 +91,7 @@ interface GameState {
 | `{ type: 'salvage', railIndex }` | rail slot occupied; pool can pay |
 | `{ type: 'neutralize', threatIndex, keep: 'discard' \| 'archive' }` | pool can pay |
 | `{ type: 'station', cardId, module }` | card in hand; Module online and below capacity; enough Crew |
-| `{ type: 'plot', circuitIndex }` / `{ type: 'plotFromHand', cardId }` | 2 Data; not already plotted; from hand only with Nav Core staffed and online |
+| `{ type: 'plot', circuitIndex }` / `{ type: 'plotFromHand', cardId }` | the card's Cost in Data; not already plotted; from hand only with Nav Core staffed and online |
 | `{ type: 'recall', module, cardId }` | before the first play or spend this turn |
 | `{ type: 'resolve', decisionId, choice }` | answers the first pending decision |
 | `{ type: 'endTurn' }` | no pending decisions |
@@ -120,7 +120,7 @@ Let `prev` = the last Circuit entry (either side), or none.
 - **Salvage** cost = max(0, Cost − slot discount); slot discount is 2 for the Airlock, 1 for the Inner Lock. Pay with the card's suit, then Power. The card goes to discard. Its slot stays empty until Drift.
 - **Neutralize** cost = max(0, Cost − patchDiscount) + (Log 2B ? 1 : 0) to archive the hazard, +2 more to take it into your discard pile instead. Pay with the hazard's suit, then Shields.
 - **Station** cost = Cost, paid in Crew only.
-- **Plot** cost = 2 Data only.
+- **Plot** cost = the card's Cost, in Data only.
 - Auto-pay spends the exact suit first, then the wild.
 
 ## Drawing
@@ -134,7 +134,7 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 
 ## Jumps and Logs
 
-- At cleanup, Jump if the Course has all four suits and total rank ≥ `[11, 20, 30][jumps] + jumpBonus`.
+- At cleanup, Jump if the Course has all four suits and total rank ≥ `[14, 20, 30][jumps] + jumpBonus`.
 - On a Jump: Course and Threat go to Archive, `jumps += 1`, then:
   - Jump 1 → pending Log 1 choice. **A:** a chosen Module gets capacity 2. **B:** all Breach cards go to the bottom of the Yard.
   - Jump 2 → pending Log 2 choice. **A:** take 2 chosen Rail cards into hand; Drift also vents the Inner Lock from now on. **B:** Archive up to 3 cards from hand or discard; neutralizing costs +1 from now on.
@@ -166,3 +166,5 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 15. **Log 2A** vents the Inner Lock every Drift, even on a turn when the Airlock card was salvaged.
 16. **Shield Array's** +1 Breach limit is checked after Impact moves the hazards, so a Shields hazard hitting this turn does not take it offline for that check.
 17. **Keeping a hazard** costs 2 more than archiving it: neutralize-and-archive costs the base amount above, neutralize-and-keep costs that +2. Patch's discount and Log 2B's +1 change only the base amount; the +2 always applies. (Changes the rulebook, where a neutralized hazard could be kept for the same price.)
+18. **Plotting** costs the card's Cost in Data (2, 3 or 5), for Plot and Plot from hand alike. Navigator still plots for free. (Changes the rulebook's flat 2 Data, so high cards are dearer to commit.)
+19. **Jump 1** needs 14 total rank, up from 11. Jumps 2 and 3 stay at 20 and 30.

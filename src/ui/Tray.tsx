@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { isStaffed, neutralizeCost, perkActive, salvageCost, SUITS, yieldOf, type Action, type Card, type GameState, type Side } from '../engine'
+import { cost, isStaffed, neutralizeCost, perkActive, salvageCost, SUITS, yieldOf, type Action, type Card, type GameState, type Side } from '../engine'
 import { SuitIcon } from './Card'
 import { costLine, describePayment, playLabel, youHave } from './payment'
 import { actionName, cardName, listAmounts, MODULE_NAME, SUIT_NAME, WILD } from './text'
@@ -52,7 +52,7 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
           <button type="button" className="btn btn-primary" onClick={() => run({ type: 'playCard', cardId: card.id, side: preview.side })}>
             {playLabel(card, preview.side)}
           </button>
-          {can(plotFromHand) && <button type="button" className="btn" onClick={() => run(plotFromHand)}>Plot from hand for 2 Data</button>}
+          {can(plotFromHand) && <button type="button" className="btn" onClick={() => run(plotFromHand)}>Plot from hand for {cost(card.rank)} Data</button>}
           <button type="button" className="btn" onClick={() => setPreview(null)}>Cancel</button>
         </div>
       </div>
@@ -71,7 +71,7 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
         note={stationable ? 'You can also station it at a Module.' : undefined}
         buttons={[
           { label: 'Add to Circuit', onClick: () => setPreview({ cardId: handCard.id, side }), disabled: !can({ type: 'playCard', cardId: handCard.id, side }) },
-          ...(can(plotFromHand) ? [{ label: 'Plot from hand for 2 Data', onClick: () => run(plotFromHand), secondary: true }] : []),
+          ...(can(plotFromHand) ? [{ label: `Plot from hand for ${cost(handCard.rank)} Data`, onClick: () => run(plotFromHand), secondary: true }] : []),
         ]}
         endTurn={endTurn}
       />
@@ -124,9 +124,9 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
     const action: Action = { type: 'plot', circuitIndex }
     return (
       <TrayMessage
-        text={entry.plotted ? `${cardName(entry.card)} is plotted. It goes to the Course at cleanup.` : `Plot ${cardName(entry.card)} for 2 Data. At cleanup it goes to the Course instead of your discard pile.`}
+        text={entry.plotted ? `${cardName(entry.card)} is plotted. It goes to the Course at cleanup.` : `Plot ${cardName(entry.card)} for ${cost(entry.card.rank)} Data. At cleanup it goes to the Course instead of your discard pile.`}
         problem={entry.plotted || can(action) ? undefined : `You have ${game.pool.data} Data.`}
-        buttons={entry.plotted ? [] : [{ label: 'Plot for 2 Data', onClick: () => run(action), disabled: !can(action) }]}
+        buttons={entry.plotted ? [] : [{ label: `Plot for ${cost(entry.card.rank)} Data`, onClick: () => run(action), disabled: !can(action) }]}
         endTurn={endTurn}
       />
     )

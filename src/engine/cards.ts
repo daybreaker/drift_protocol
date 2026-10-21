@@ -15,7 +15,8 @@ export const ACTION_NAMES: Record<number, string> = {
   12: 'Captain',
 }
 
-export const JUMP_THRESHOLDS = [11, 20, 30] as const
+/** Total Course rank needed for Jumps 1–3 (Ruling 19 raised Jump 1 from 11). */
+export const JUMP_THRESHOLDS = [14, 20, 30] as const
 
 export function cost(rank: number): number {
   if (rank <= 4) return 2

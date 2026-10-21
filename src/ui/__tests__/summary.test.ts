@@ -39,7 +39,7 @@ describe('summarizeEndTurn', () => {
   })
 
   it('reports a Jump', () => {
-    const course = [c('power', 3), c('crew', 3), c('data', 3), c('shields', 2)]
+    const course = [c('power', 4), c('crew', 4), c('data', 3), c('shields', 3)]
     expect(end(board({ course }))).toContain('Jump 1 complete.')
   })
 })
