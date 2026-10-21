@@ -39,7 +39,8 @@ export interface TurnFlags {
 
 export type Decision =
   | { kind: 'chooseResource'; amount: number }
-  | { kind: 'scan'; cards: Card[]; drawAfter: boolean }
+  /** reshuffledAfter: how many of `cards` came from the deck before the discard was shuffled in under it. */
+  | { kind: 'scan'; cards: Card[]; drawAfter: boolean; reshuffledAfter?: number }
   | { kind: 'chooseCards'; purpose: 'jettison' | 'navigator'; max: number }
   | { kind: 'tractorBeam'; toHand: boolean }
   | { kind: 'dock'; produceNow: boolean }

@@ -72,15 +72,21 @@ export function neutralizePayment(s: GameState, threatIndex: number): Pool | nul
   return pay(s.pool, amount, card.suit, 'shields')
 }
 
-/** Draws up to n cards, reshuffling the discard when the deck runs out. The first reshuffle ends calm start. */
+/** Shuffles the discard pile in under the deck. The first reshuffle ends calm start. */
+export function reshuffle(s: GameState): void {
+  if (s.discard.length === 0) return
+  const [shuffled, rng] = shuffle(s.discard, s.rng)
+  s.deck = [...s.deck, ...shuffled]
+  s.rng = rng
+  s.discard = []
+  s.calm = false
+}
+
+/** Draws up to n cards, reshuffling the discard when the deck runs out. */
 export function draw(s: GameState, n: number): void {
   for (let i = 0; i < n; i++) {
-    if (s.deck.length === 0) {
-      if (s.discard.length === 0) return
-      ;[s.deck, s.rng] = shuffle(s.discard, s.rng)
-      s.discard = []
-      s.calm = false
-    }
+    if (s.deck.length === 0) reshuffle(s)
+    if (s.deck.length === 0) return
     s.hand.push(s.deck.shift()!)
   }
 }

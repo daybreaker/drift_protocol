@@ -1,7 +1,7 @@
 // Card actions and the decisions they wait on. Like rules.ts, these mutate a draft.
 import { yieldOf } from './cards'
 import { IllegalActionError } from './errors'
-import { canStationAt, draw, production, salvagePayment, takeFromHand } from './rules'
+import { canStationAt, draw, production, reshuffle, salvagePayment, takeFromHand } from './rules'
 import { SUITS, type Card, type Decision, type DecisionChoice, type GameState } from './types'
 
 /**
@@ -17,9 +17,14 @@ export function runAction(s: GameState, rank: number, sync: boolean, position: n
       s.turnFlags.patchDiscount += 2
       if (sync && s.breach.length > 0) s.yard.push(s.breach.pop()!)
       break
-    case 3:
-      s.pending.push({ kind: 'scan', cards: s.deck.slice(0, 3), drawAfter: sync })
+    case 3: {
+      // Ruling 8: a short deck shows what it has, then the discard is shuffled in under it for the rest.
+      const short = s.deck.length < 3 && s.discard.length > 0
+      const before = s.deck.length
+      if (short) reshuffle(s)
+      s.pending.push({ kind: 'scan', cards: s.deck.slice(0, 3), drawAfter: sync, ...(short && { reshuffledAfter: before }) })
       break
+    }
     case 4:
       s.pending.push({ kind: 'chooseCards', purpose: 'jettison', max: sync ? 2 : 1 })
       break

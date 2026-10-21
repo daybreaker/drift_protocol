@@ -156,7 +156,7 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 5. **Captain's** "counts as Synced and Cascaded" gives each bonus once, even if the next card would also qualify naturally.
 6. **Calm start** ends the moment the first reshuffle happens.
 7. **Scrounge's** Sync gain is 2 of one chosen resource.
-8. **Scan** looks at fewer cards if the deck has fewer than 3; it never reshuffles.
+8. **Scan** with fewer than 3 cards in the deck shows the cards it has, then shuffles the discard pile in under them and shows the rest from there. Like any reshuffle, this ends calm start. It looks at fewer than 3 only when the deck and discard together hold fewer.
 9. **Jettison** and **Navigator** may choose zero cards.
 10. Stationing a card is not a play: it is not added to the Circuit and does not affect Sync or Cascade.
 11. **Recall** empties that Module's production for the turn: the whole amount it produced at Systems Online is refunded, even if another card stays stationed there (rulebook: "that Module produces nothing this turn").

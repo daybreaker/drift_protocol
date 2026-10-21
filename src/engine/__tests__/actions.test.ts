@@ -55,10 +55,32 @@ describe('3 Scan', () => {
     expect(s.discard.map((x) => x.id)).toContain(b.id)
   })
 
-  it('looks at fewer cards when the deck is short, without reshuffling', () => {
+  it('shuffles the discard in under a short deck to show 3, which ends calm start', () => {
     const card = c('crew', 3)
     const s = play(state({ hand: [card], deck: [c('data', 1)], discard: filler(4) }), card, 'action')
-    expect(s.pending).toEqual([{ kind: 'scan', cards: [c('data', 1)], drawAfter: false }])
+    const scan = s.pending[0]
+    expect(scan).toMatchObject({ kind: 'scan', drawAfter: false, reshuffledAfter: 1 })
+    if (scan.kind !== 'scan') throw new Error('expected a scan decision')
+    expect(scan.cards).toHaveLength(3)
+    expect(scan.cards[0]).toEqual(c('data', 1))
+    expect(scan.cards.slice(1).every((x) => x.id.startsWith('filler-'))).toBe(true)
+    expect(s.deck.map((x) => x.id).slice(0, 3)).toEqual(scan.cards.map((x) => x.id))
+    expect(s.deck).toHaveLength(5)
+    expect(s.discard).toEqual([])
+    expect(s.calm).toBe(false)
+  })
+
+  it('looks at fewer cards only when the deck and discard together hold fewer than 3', () => {
+    const card = c('crew', 3)
+    const s = play(state({ hand: [card], deck: [], discard: [c('data', 1)] }), card, 'action')
+    expect(s.pending).toEqual([{ kind: 'scan', cards: [c('data', 1)], drawAfter: false, reshuffledAfter: 0 }])
+  })
+
+  it('does not reshuffle when the deck already holds 3', () => {
+    const card = c('crew', 3)
+    const s = play(state({ hand: [card], deck: filler(3), discard: [c('data', 1)] }), card, 'action')
+    expect(s.pending[0]).not.toHaveProperty('reshuffledAfter')
+    expect(s.calm).toBe(true)
   })
 
   it('Sync: draws 1 after reordering', () => {
