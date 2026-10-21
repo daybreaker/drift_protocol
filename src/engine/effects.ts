@@ -5,37 +5,45 @@ import { canStationAt, draw, production, reshuffle, salvagePayment, takeFromHand
 import { SUITS, type Card, type Decision, type DecisionChoice, type GameState } from './types'
 
 /**
- * Runs the action of `rank` as if played at Circuit `position`.
+ * Runs the action of `rank` as if played at Circuit position `position`.
  * Engineer passes its own position, so a copied Relay looks at the card before Engineer.
+ * In preview mode it applies only what needs no choice and reveals no hidden card: no draws, no decisions.
  */
-export function runAction(s: GameState, rank: number, sync: boolean, position: number): void {
+export function runAction(s: GameState, rank: number, sync: boolean, position: number, preview = false): void {
+  const drawN = (n: number) => {
+    if (!preview) draw(s, n)
+  }
+  const ask = (d: Decision) => {
+    if (!preview) s.pending.push(d)
+  }
   switch (rank) {
     case 1:
-      s.pending.push({ kind: 'chooseResource', amount: sync ? 2 : 1 })
+      ask({ kind: 'chooseResource', amount: sync ? 2 : 1 })
       break
     case 2:
       s.turnFlags.patchDiscount += 2
       if (sync && s.breach.length > 0) s.yard.push(s.breach.pop()!)
       break
     case 3: {
+      if (preview) break
       // Ruling 8: a short deck shows what it has, then the discard is shuffled in under it for the rest.
       const short = s.deck.length < 3 && s.discard.length > 0
       const before = s.deck.length
       if (short) reshuffle(s)
-      s.pending.push({ kind: 'scan', cards: s.deck.slice(0, 3), drawAfter: sync, ...(short && { reshuffledAfter: before }) })
+      ask({ kind: 'scan', cards: s.deck.slice(0, 3), drawAfter: sync, ...(short && { reshuffledAfter: before }) })
       break
     }
     case 4:
-      s.pending.push({ kind: 'chooseCards', purpose: 'jettison', max: sync ? 2 : 1 })
+      ask({ kind: 'chooseCards', purpose: 'jettison', max: sync ? 2 : 1 })
       break
     case 5:
-      draw(s, sync ? 3 : 2)
+      drawN(sync ? 3 : 2)
       break
     case 6:
-      s.pending.push({ kind: 'tractorBeam', toHand: sync })
+      ask({ kind: 'tractorBeam', toHand: sync })
       break
     case 7:
-      s.pending.push({ kind: 'dock', produceNow: sync })
+      ask({ kind: 'dock', produceNow: sync })
       break
     case 8: {
       const prev = s.circuit[position - 1]
@@ -44,19 +52,17 @@ export function runAction(s: GameState, rank: number, sync: boolean, position: n
     }
     case 9:
       s.turnFlags.overdrive += 1
-      if (sync) draw(s, 1)
+      if (sync) drawN(1)
       break
     case 10:
       // With nothing to copy, Engineer does nothing rather than leave an unanswerable decision.
-      if (s.circuit.some((_, i) => canCopy(s, position, i))) {
-        s.pending.push({ kind: 'engineer', sync, engineerIndex: position })
-      }
+      if (s.circuit.some((_, i) => canCopy(s, position, i))) ask({ kind: 'engineer', sync, engineerIndex: position })
       break
     case 11:
-      s.pending.push({ kind: 'chooseCards', purpose: 'navigator', max: sync ? 2 : 1 })
+      ask({ kind: 'chooseCards', purpose: 'navigator', max: sync ? 2 : 1 })
       break
     case 12:
-      draw(s, sync ? 3 : 2)
+      drawN(sync ? 3 : 2)
       s.turnFlags.captainNext = true
       break
   }

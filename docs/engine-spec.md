@@ -10,7 +10,7 @@ Source of truth for the rules: the Drift Protocol rulebook in Notion ([DRIFT PRO
 newGame(options) → GameState
 legalActions(state) → Action[]
 apply(state, action) → GameState        // pure: never mutates its input
-previewPlay(state, cardId, side) → GameState   // placement only, no effects
+previewPlay(state, cardId, side) → GameState   // placement plus effects that need no choice
 ```
 
 - **Pure and immutable.** `apply` returns a new state. The UI's tentative placement is just `previewPlay(state, …)` rendered; OK sends `playCard`, Cancel discards the preview.
@@ -113,7 +113,7 @@ Let `prev` = the last Circuit entry (either side), or none.
 - **Resource side:** pool[suit] += yield + (synced ? 1 : 0) + overdrive.
 - **Action side:** run the base or Sync effect. Effects needing a choice push a `Decision`.
 
-`previewPlay` performs only the placement steps above (Circuit entry, flags, resource gains, Cascade Power) and skips action effects. `playCard` performs placement, then effects.
+`previewPlay` performs the placement steps above (Circuit entry, flags, resource gains, Cascade Power), then the parts of the action that need no choice and reveal no hidden card: Relay's gain, Patch's discount (and its Sync Breach move), and the Overdrive and Captain flags. It never draws, shuffles or pushes a decision. `playCard` performs placement, then the full effects.
 
 ## Spending and payment
 

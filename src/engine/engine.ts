@@ -238,6 +238,8 @@ export function previewPlay(state: GameState, cardId: string, side: Side): GameS
     throw new IllegalActionError(`Cannot play ${cardId}`)
   }
   const s = structuredClone(state)
-  place(s, cardId, side)
+  const position = place(s, cardId, side)
+  const { card, synced } = s.circuit[position]
+  if (side === 'action') runAction(s, card.rank, synced, position, true)
   return s
 }

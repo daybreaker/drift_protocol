@@ -93,6 +93,26 @@ describe('previewPlay', () => {
     expect(p.pending).toEqual([])
   })
 
+  it("shows effects that need no choice and reveal no cards, like Relay's gain", () => {
+    const relay = c('power', 8)
+    const p = previewPlay(state({ hand: [relay], circuit: [entry(c('data', 9), 'resource')] }), relay.id, 'action')
+    expect(p.pool.data).toBe(3)
+  })
+
+  it("applies Overdrive's and Patch's flags but never draws or asks a question", () => {
+    const overdrive = c('power', 9)
+    const p = previewPlay(state({ hand: [overdrive], deck: filler(3), circuit: [entry(c('power', 2), 'resource')] }), overdrive.id, 'action')
+    expect(p.turnFlags.overdrive).toBe(1)
+    expect(p.hand).toEqual([])
+    expect(p.deck).toHaveLength(3)
+
+    const patch = c('data', 2)
+    expect(previewPlay(state({ hand: [patch] }), patch.id, 'action').turnFlags.patchDiscount).toBe(2)
+
+    const scrounge = c('crew', 1)
+    expect(previewPlay(state({ hand: [scrounge] }), scrounge.id, 'action').pending).toEqual([])
+  })
+
   it('never mutates the state it was given', () => {
     const card = c('data', 8)
     const before = state({ hand: [card] })
