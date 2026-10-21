@@ -12,7 +12,7 @@ import {
   type GameState,
   type Side,
 } from '../engine'
-import { Course, ModuleTile, Outcome, Pool, StatusBar, Zone } from './Board'
+import { Course, ModuleTile, Outcome, Pool, StatusBar, Zone, type Exit } from './Board'
 import { CardView } from './Card'
 import { DecisionPanel } from './DecisionPanel'
 import { Hand } from './Hand'
@@ -30,9 +30,11 @@ interface Props {
   undo: () => void
   quit: () => void
   setHandOrder: (ids: string[]) => void
+  /** Set for a legacy Session, which is left rather than abandoned. */
+  exit?: Exit
 }
 
-export function Game({ session, act, undo, quit, setHandOrder }: Props) {
+export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
   const { game } = session
   const [inspectedId, setInspectedId] = useState<string | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
@@ -113,7 +115,7 @@ export function Game({ session, act, undo, quit, setHandOrder }: Props) {
   return (
     <InspectContext.Provider value={inspectValue}>
       <div className="game">
-        <StatusBar game={game} canUndo={session.undo.length > 0} undo={() => { setPreview(null); undo() }} quit={quit} />
+        <StatusBar game={game} canUndo={session.undo.length > 0} undo={() => { setPreview(null); undo() }} quit={quit} exit={exit} />
 
         <Zone area="rail" title="Cargo Rail" note={game.calm ? 'Calm start: drifting cards are debris until your first reshuffle.' : undefined}>
           <div className="rail">
@@ -237,7 +239,7 @@ export function Game({ session, act, undo, quit, setHandOrder }: Props) {
           run={run}
           can={can}
         />
-        {game.outcome && <Outcome game={game} quit={quit} />}
+        {game.outcome && <Outcome game={game} quit={quit} exit={exit} />}
       </div>
     </InspectContext.Provider>
   )

@@ -25,6 +25,8 @@ export async function openIndexedDbStore(name = LEGACY_DB_NAME): Promise<LegacyS
       return open
     })(),
   )
+  // Let a newer version of the app (in another tab) upgrade the schema instead of being blocked by us.
+  db.onversionchange = () => db.close()
   return new IndexedDbStore(db)
 }
 

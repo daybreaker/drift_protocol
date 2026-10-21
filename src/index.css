@@ -467,6 +467,24 @@ button.card:hover:not(:disabled) { translate: 0 -3px; }
 .seed { width: 200px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--mat-deep); color: var(--ink); font: 500 15px var(--text); }
 .btn-launch { align-self: flex-start; padding: 13px 28px; font-size: 17px; }
 
+/* ---- Legacy campaign --------------------------------------------------- */
+
+.field { display: flex; flex-direction: column; gap: 6px; font: 600 14px var(--display); }
+.text-input { width: min(100%, 320px); }
+.campaign-head { display: flex; flex-direction: column; gap: 14px; }
+.campaign-stats { display: flex; flex-wrap: wrap; gap: 28px; margin: 0; }
+.campaign-stats div { display: flex; flex-direction: column; gap: 2px; }
+.campaign-stats dt { color: var(--muted); font-size: 13px; }
+.campaign-stats dd { margin: 0; font: 600 22px var(--display); }
+.story { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border: 1px dashed var(--line); border-radius: 12px; }
+.campaign h2 { font: 600 19px var(--display); margin: 0; }
+.campaign-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.campaign-actions .btn-launch { align-self: auto; }
+.log-table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 14px; }
+.log-table th { text-align: left; color: var(--muted); font-weight: 500; }
+.log-table th, .log-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line-soft); }
+.save-error { position: fixed; z-index: 30; top: 8px; left: 50%; translate: -50% 0; margin: 0; padding: 8px 14px; border-radius: 8px; background: var(--danger); color: var(--mat-deep); font-weight: 600; }
+
 /* ---- Responsive --------------------------------------------------------- */
 
 @media (max-width: 1180px) {

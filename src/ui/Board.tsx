@@ -13,7 +13,15 @@ export function Zone({ area, title, note, tone, children }: { area: string; titl
   )
 }
 
-export function StatusBar({ game, canUndo, undo, quit }: { game: GameState; canUndo: boolean; undo: () => void; quit: () => void }) {
+/** How a game is left: a standard game is abandoned (after a confirm); a legacy Session is kept and left. */
+export interface Exit {
+  /** Status bar button that leaves without abandoning, e.g. "Campaign". */
+  button: string
+  /** Outcome dialog button, e.g. "Back to campaign". */
+  outcome: string
+}
+
+export function StatusBar({ game, canUndo, undo, quit, exit }: { game: GameState; canUndo: boolean; undo: () => void; quit: () => void; exit?: Exit }) {
   const [confirming, setConfirming] = useState(false)
   const limit = breachLimit(game)
   return (
@@ -39,7 +47,9 @@ export function StatusBar({ game, canUndo, undo, quit }: { game: GameState; canU
       <span className="stat">Archive <b>{game.archive.length}</b></span>
       <span className="status-actions">
         <button type="button" className="btn btn-small" disabled={!canUndo} onClick={undo}>Undo</button>
-        {confirming ? (
+        {exit ? (
+          <button type="button" className="btn btn-small" onClick={quit}>{exit.button}</button>
+        ) : confirming ? (
           <>
             <button type="button" className="btn btn-small btn-danger" onClick={quit}>Abandon this game</button>
             <button type="button" className="btn btn-small" onClick={() => setConfirming(false)}>Keep playing</button>
@@ -172,7 +182,7 @@ export function Pool({ game, view }: { game: GameState; view: GameState }) {
   )
 }
 
-export function Outcome({ game, quit }: { game: GameState; quit: () => void }) {
+export function Outcome({ game, quit, exit }: { game: GameState; quit: () => void; exit?: Exit }) {
   const o = game.outcome!
   const staffed = SUITS.filter((m) => isStaffed(game, m)).length
   return (
@@ -198,7 +208,7 @@ export function Outcome({ game, quit }: { game: GameState; quit: () => void }) {
             <p className="muted">You made {game.jumps} of 3 Jumps in {game.turn} turns.</p>
           </>
         )}
-        <button type="button" className="btn btn-primary" onClick={quit}>New game</button>
+        <button type="button" className="btn btn-primary" onClick={quit}>{exit?.outcome ?? 'New game'}</button>
       </div>
     </div>
   )
