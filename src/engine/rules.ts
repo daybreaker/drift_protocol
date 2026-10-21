@@ -59,15 +59,19 @@ export function salvagePayment(s: GameState, railIndex: number, extraDiscount = 
   return pay(s.pool, amount, card.suit, 'power')
 }
 
-export function neutralizeCost(s: GameState, threatIndex: number): number | null {
+/** Extra cost to take a neutralized hazard into the discard pile instead of archiving it (Ruling 17). */
+export const KEEP_SURCHARGE = 2
+
+export function neutralizeCost(s: GameState, threatIndex: number, keep: 'discard' | 'archive'): number | null {
   const card = s.threat[threatIndex]
   if (!card) return null
-  return Math.max(0, cost(card.rank) - s.turnFlags.patchDiscount) + (s.logs.log2 === 'B' ? 1 : 0)
+  const base = Math.max(0, cost(card.rank) - s.turnFlags.patchDiscount) + (s.logs.log2 === 'B' ? 1 : 0)
+  return base + (keep === 'discard' ? KEEP_SURCHARGE : 0)
 }
 
-export function neutralizePayment(s: GameState, threatIndex: number): Pool | null {
+export function neutralizePayment(s: GameState, threatIndex: number, keep: 'discard' | 'archive'): Pool | null {
   const card = s.threat[threatIndex]
-  const amount = neutralizeCost(s, threatIndex)
+  const amount = neutralizeCost(s, threatIndex, keep)
   if (!card || amount === null) return null
   return pay(s.pool, amount, card.suit, 'shields')
 }

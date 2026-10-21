@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { isStaffed, neutralizeCost, perkActive, salvageCost, SUITS, yieldOf, type Action, type Card, type GameState, type Side } from '../engine'
 import { SuitIcon } from './Card'
-import { costLine, playLabel } from './payment'
-import { actionName, cardName, MODULE_NAME, SUIT_NAME } from './text'
+import { costLine, describePayment, playLabel, youHave } from './payment'
+import { actionName, cardName, MODULE_NAME, SUIT_NAME, WILD } from './text'
 
 export interface Preview {
   cardId: string
@@ -94,18 +94,20 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
   const threatIndex = game.threat.findIndex((c) => c.id === id)
   if (threatIndex >= 0) {
     const card = game.threat[threatIndex]
-    const amount = neutralizeCost(game, threatIndex)!
+    const archiveCost = neutralizeCost(game, threatIndex, 'archive')!
+    const keepCost = neutralizeCost(game, threatIndex, 'discard')!
     const keep: Action = { type: 'neutralize', threatIndex, keep: 'discard' }
     const archive: Action = { type: 'neutralize', threatIndex, keep: 'archive' }
-    const pay = costLine(game, amount, card.suit, 'neutralize')
+    const payArchive = describePayment(game.pool, archiveCost, card.suit, WILD.neutralize)
+    const payKeep = describePayment(game.pool, keepCost, card.suit, WILD.neutralize)
     return (
       <TrayMessage
-        text={`Neutralize ${cardName(card)} for ${amount}: take it into your discard pile, or archive it.`}
-        note={pay.ok ? pay.text : undefined}
-        problem={pay.ok ? undefined : pay.text}
+        text={`Neutralize ${cardName(card)} for ${archiveCost} to archive it, or ${keepCost} to keep it in your discard pile.`}
+        note={payArchive ? `Archiving pays ${payArchive}. ${payKeep ? `Keeping pays ${payKeep}.` : 'You cannot afford to keep it.'}` : undefined}
+        problem={payArchive ? undefined : youHave(game, card.suit, 'neutralize')}
         buttons={[
-          { label: 'Neutralize and keep it', onClick: () => run(keep), disabled: !can(keep) },
-          { label: 'Neutralize and archive it', onClick: () => run(archive), disabled: !can(archive) },
+          { label: `Neutralize and archive it (${archiveCost})`, onClick: () => run(archive), disabled: !can(archive) },
+          { label: `Neutralize and keep it (${keepCost})`, onClick: () => run(keep), disabled: !can(keep), secondary: true },
         ]}
         endTurn={endTurn}
       />

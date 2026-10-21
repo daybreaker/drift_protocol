@@ -150,7 +150,7 @@ export function Game({ session, act, undo, quit, setHandOrder }: Props) {
               {game.threat.map((card, i) => (
                 <CardView key={card.id} card={card} size="sm">
                   <span className="cost-tag" data-affordable={can({ type: 'neutralize', threatIndex: i, keep: 'archive' })}>
-                    {neutralizeCost(game, i)}
+                    {neutralizeCost(game, i, 'archive')}
                   </span>
                 </CardView>
               ))}

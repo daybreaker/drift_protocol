@@ -32,12 +32,26 @@ describe('Neutralize', () => {
   const threat = [c('crew', 9)]
 
   it('pays the hazard suit first, then Shields, and keeps or Archives the card', () => {
-    const kept = apply(state({ threat, pool: pool({ crew: 2, shields: 4 }) }), { type: 'neutralize', threatIndex: 0, keep: 'discard' })
+    const kept = apply(state({ threat, pool: pool({ crew: 2, shields: 6 }) }), { type: 'neutralize', threatIndex: 0, keep: 'discard' })
     expect(kept.pool).toEqual(pool({ shields: 1 }))
     expect(kept.discard.map((x) => x.id)).toEqual(['crew-09'])
     expect(kept.threat).toEqual([])
     const archived = apply(state({ threat, pool: pool({ shields: 5 }) }), { type: 'neutralize', threatIndex: 0, keep: 'archive' })
     expect(archived.archive.map((x) => x.id)).toEqual(['crew-09'])
+  })
+
+  it('costs 2 more to keep the card than to archive it', () => {
+    const s = state({ threat, pool: pool({ shields: 6 }) })
+    expect(() => apply(s, { type: 'neutralize', threatIndex: 0, keep: 'discard' })).toThrow(IllegalActionError)
+    expect(apply(s, { type: 'neutralize', threatIndex: 0, keep: 'archive' }).pool.shields).toBe(1)
+  })
+
+  it('Patch takes 2 off the base Cost only, never the cost of keeping', () => {
+    const base = state({ threat: [c('crew', 2)], pool: pool({ shields: 1 }) })
+    const patched = { ...base, turnFlags: { ...base.turnFlags, patchDiscount: 4 } }
+    expect(neutralizeCost(patched, 0, 'archive')).toBe(0)
+    expect(neutralizeCost(patched, 0, 'discard')).toBe(2)
+    expect(() => apply(patched, { type: 'neutralize', threatIndex: 0, keep: 'discard' })).toThrow(IllegalActionError)
   })
 
   it('costs 1 more after Log 2B', () => {
@@ -47,8 +61,9 @@ describe('Neutralize', () => {
 
   it('reports its cost after Patch and Log 2B', () => {
     const base = state({ threat, logs: { log2: 'B' } })
-    expect(neutralizeCost(base, 0)).toBe(6)
-    expect(neutralizeCost({ ...base, turnFlags: { ...base.turnFlags, patchDiscount: 2 } }, 0)).toBe(4)
+    expect(neutralizeCost(base, 0, 'archive')).toBe(6)
+    expect(neutralizeCost(base, 0, 'discard')).toBe(8)
+    expect(neutralizeCost({ ...base, turnFlags: { ...base.turnFlags, patchDiscount: 2 } }, 0, 'archive')).toBe(4)
   })
 
   it('cannot be paid with Power', () => {

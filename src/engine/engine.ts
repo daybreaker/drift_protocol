@@ -101,7 +101,7 @@ export function isLegal(s: GameState, action: Action): boolean {
     case 'salvage':
       return salvagePayment(s, action.railIndex) !== null
     case 'neutralize':
-      return neutralizePayment(s, action.threatIndex) !== null
+      return neutralizePayment(s, action.threatIndex, action.keep) !== null
     case 'station':
       return canStation(s, action.cardId, action.module)
     case 'plot':
@@ -135,9 +135,8 @@ export function legalActions(state: GameState): Action[] {
     if (salvagePayment(s, railIndex)) actions.push({ type: 'salvage', railIndex })
   })
   s.threat.forEach((_, threatIndex) => {
-    if (neutralizePayment(s, threatIndex)) {
-      actions.push({ type: 'neutralize', threatIndex, keep: 'discard' })
-      actions.push({ type: 'neutralize', threatIndex, keep: 'archive' })
+    for (const keep of ['discard', 'archive'] as const) {
+      if (neutralizePayment(s, threatIndex, keep)) actions.push({ type: 'neutralize', threatIndex, keep })
     }
   })
   s.circuit.forEach((_, circuitIndex) => {
@@ -190,7 +189,7 @@ export function apply(state: GameState, action: Action): GameState {
       break
     }
     case 'neutralize': {
-      s.pool = neutralizePayment(s, action.threatIndex)!
+      s.pool = neutralizePayment(s, action.threatIndex, action.keep)!
       const [card] = s.threat.splice(action.threatIndex, 1)
       ;(action.keep === 'archive' ? s.archive : s.discard).push(card)
       s.turnFlags.playedOrSpent = true

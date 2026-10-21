@@ -118,7 +118,7 @@ Let `prev` = the last Circuit entry (either side), or none.
 ## Spending and payment
 
 - **Salvage** cost = max(0, Cost − slot discount); slot discount is 2 for the Airlock, 1 for the Inner Lock. Pay with the card's suit, then Power. The card goes to discard. Its slot stays empty until Drift.
-- **Neutralize** cost = max(0, Cost − patchDiscount) + (Log 2B ? 1 : 0). Pay with the hazard's suit, then Shields.
+- **Neutralize** cost = max(0, Cost − patchDiscount) + (Log 2B ? 1 : 0) to archive the hazard, +2 more to take it into your discard pile instead. Pay with the hazard's suit, then Shields.
 - **Station** cost = Cost, paid in Crew only.
 - **Plot** cost = 2 Data only.
 - Auto-pay spends the exact suit first, then the wild.
@@ -165,3 +165,4 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 14. **Dock's** Sync makes the Module produce for every card stationed there, not only the new one.
 15. **Log 2A** vents the Inner Lock every Drift, even on a turn when the Airlock card was salvaged.
 16. **Shield Array's** +1 Breach limit is checked after Impact moves the hazards, so a Shields hazard hitting this turn does not take it offline for that check.
+17. **Keeping a hazard** costs 2 more than archiving it: neutralize-and-archive costs the base amount above, neutralize-and-keep costs that +2. Patch's discount and Log 2B's +1 change only the base amount; the +2 always applies. (Changes the rulebook, where a neutralized hazard could be kept for the same price.)
