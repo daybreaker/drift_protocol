@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { isStaffed, neutralizeCost, perkActive, salvageCost, SUITS, yieldOf, type Action, type Card, type GameState, type Side } from '../engine'
 import { SuitIcon } from './Card'
 import { costLine, describePayment, playLabel, youHave } from './payment'
-import { actionName, cardName, MODULE_NAME, SUIT_NAME, WILD } from './text'
+import { actionName, cardName, listAmounts, MODULE_NAME, SUIT_NAME, WILD } from './text'
 
 export interface Preview {
   cardId: string
@@ -31,6 +31,7 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
     const gain = yieldOf(card.rank) + (entry.synced ? 1 : 0) + game.turnFlags.overdrive
     const plotFromHand: Action = { type: 'plotFromHand', cardId: card.id }
     const links = [entry.synced && 'Synced', entry.cascaded && `Cascade: +${perkActive(game, 'power') ? 2 : 1} Power`].filter(Boolean).join('. ')
+    const gains = listAmounts(Object.fromEntries(SUITS.map((s) => [s, view.pool[s] - game.pool[s]])))
     return (
       <div className="tray">
         <div className="tray-main">
@@ -42,7 +43,10 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
               <SuitIcon suit={card.suit} size={16} /> +{gain} {SUIT_NAME[card.suit]}
             </button>
           </div>
-          <p className="tray-note">{links || 'No link to the previous card'}. Press F to turn the card, Enter to play it.</p>
+          <p className="tray-note">
+            {gains ? `Gains ${gains} in all. ` : 'Gains no resources. '}
+            {links || 'No link to the previous card'}. Press F to turn the card, Enter to play it.
+          </p>
         </div>
         <div className="tray-buttons">
           <button type="button" className="btn btn-primary" onClick={() => run({ type: 'playCard', cardId: card.id, side: preview.side })}>

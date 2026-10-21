@@ -36,14 +36,12 @@ interface CardViewProps {
   dim?: boolean
   /** Show only the top band, as for a card tucked under a Module. */
   tucked?: boolean
-  /** A choice in a decision panel: clicking picks it (and inspects it) instead of turning it. */
-  onClick?: () => void
-  disabled?: boolean
   children?: ReactNode
 }
 
-export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tucked, onClick, disabled, children }: CardViewProps) {
-  const { inspectedId, inspect, activate } = useContext(InspectContext)
+/** Clicking a card inspects it; clicking the inspected card again turns it. */
+export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tucked, children }: CardViewProps) {
+  const { inspectedId, activate } = useContext(InspectContext)
   const className = [
     'card',
     `card-${size}`,
@@ -57,22 +55,13 @@ export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tuc
     .filter(Boolean)
     .join(' ')
   const label = `${cardName(card)}, ${actionName(card)}${flipped ? ', action side up' : ''}`
-  const click = onClick
-    ? () => {
-        inspect(card)
-        onClick()
-      }
-    : () => activate(card)
-
   return (
     <button
       type="button"
       className={className}
       data-suit={card.suit}
-      onClick={click}
-      disabled={disabled}
+      onClick={() => activate(card)}
       aria-label={label}
-      aria-pressed={onClick ? !!selected : undefined}
       aria-current={inspectedId === card.id ? 'true' : undefined}
     >
       <span className="card-face">

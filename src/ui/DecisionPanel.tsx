@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
-import { cardName, MODULE_NAME, railLeftToRight, SUIT_NAME } from './text'
+import { actionName, cardName, MODULE_NAME, railLeftToRight, SUIT_NAME } from './text'
 
 interface Props {
   game: GameState
@@ -44,6 +44,26 @@ function Prompt({ title, children }: { title: string; children?: ReactNode }) {
       <h2>{title}</h2>
       {children && <p>{children}</p>}
     </header>
+  )
+}
+
+/** A card offered in a decision. Clicking the card inspects it, as anywhere else; the button beneath chooses it. */
+function Pick({ card, label, onChoose, pressed, disabled, flipped, size = 'sm' }: {
+  card: Card
+  label: string
+  onChoose: () => void
+  pressed?: boolean
+  disabled?: boolean
+  flipped?: boolean
+  size?: 'xs' | 'sm'
+}) {
+  return (
+    <div className="pick">
+      <CardView card={card} size={size} flipped={flipped} selected={pressed} dim={disabled && !pressed} />
+      <button type="button" className={`btn btn-small ${pressed ? 'btn-primary' : ''}`} aria-pressed={pressed} disabled={disabled} onClick={onChoose}>
+        {label}
+      </button>
+    </div>
   )
 }
 
@@ -176,13 +196,13 @@ function CardGroups({ groups, picked, onPick, full }: { groups: [string, Card[]]
           ) : (
             <div className="decision-row">
               {cards.map((card) => (
-                <CardView
+                <Pick
                   key={card.id}
                   card={card}
-                  size="sm"
-                  selected={picked.includes(card.id)}
+                  label={picked.includes(card.id) ? 'Picked' : 'Pick'}
+                  pressed={picked.includes(card.id)}
                   disabled={full && !picked.includes(card.id)}
-                  onClick={() => onPick(card.id)}
+                  onChoose={() => onPick(card.id)}
                 />
               ))}
             </div>
@@ -202,17 +222,13 @@ function TractorBeam({ game, decision, resolve, valid }: FormProps<'tractorBeam'
       <div className="decision-row">
         {railLeftToRight(game.rail).map(([card, railIndex]) =>
           card ? (
-            <div key={card.id} className="pick">
-              <CardView
-                card={card}
-                size="sm"
-                disabled={!valid({ kind: 'tractorBeam', railIndex })}
-                onClick={() => resolve({ kind: 'tractorBeam', railIndex })}
-              />
-              <span className="pick-cost">
-                {salvageCost(game, railIndex, 2)} <SuitIcon suit={card.suit} size={12} />
-              </span>
-            </div>
+            <Pick
+              key={card.id}
+              card={card}
+              label={`Salvage for ${salvageCost(game, railIndex, 2)}`}
+              disabled={!valid({ kind: 'tractorBeam', railIndex })}
+              onChoose={() => resolve({ kind: 'tractorBeam', railIndex })}
+            />
           ) : null,
         )}
       </div>
@@ -234,7 +250,13 @@ function Dock({ game, decision, resolve, valid }: FormProps<'dock'>) {
       </Prompt>
       <div className="decision-row">
         {game.hand.map((card) => (
-          <CardView key={card.id} card={card} size="sm" selected={card.id === cardId} onClick={() => setCardId(card.id === cardId ? null : card.id)} />
+          <Pick
+            key={card.id}
+            card={card}
+            label={card.id === cardId ? 'Chosen' : 'Choose'}
+            pressed={card.id === cardId}
+            onChoose={() => setCardId(card.id === cardId ? null : card.id)}
+          />
         ))}
         {game.hand.length === 0 && <p className="muted">Your hand is empty.</p>}
       </div>
@@ -267,13 +289,13 @@ function Engineer({ game, decision, resolve, valid }: FormProps<'engineer'>) {
       <div className="decision-row">
         {game.circuit.map((e, circuitIndex) =>
           circuitIndex === decision.engineerIndex ? null : (
-            <CardView
+            <Pick
               key={e.card.id}
               card={e.card}
-              size="sm"
               flipped={e.side === 'action'}
+              label={e.card.rank === 10 ? 'Cannot copy' : `Copy ${actionName(e.card)}`}
               disabled={!valid({ kind: 'engineer', circuitIndex })}
-              onClick={() => resolve({ kind: 'engineer', circuitIndex })}
+              onChoose={() => resolve({ kind: 'engineer', circuitIndex })}
             />
           ),
         )}
@@ -334,7 +356,9 @@ function Log2({ game, resolve, valid }: { game: GameState; resolve: (c: Decision
           <p>Take any 2 Cargo Rail cards into your hand now. From now on, Drift vents both the Airlock and the Inner Lock each turn.</p>
           <div className="decision-row">
             {railLeftToRight(game.rail).map(([card, i]) =>
-              card ? <CardView key={card.id} card={card} size="xs" selected={rail.includes(i)} onClick={() => toggleRail(i)} /> : null,
+              card ? (
+                <Pick key={card.id} card={card} size="xs" label={rail.includes(i) ? 'Taking' : 'Take'} pressed={rail.includes(i)} onChoose={() => toggleRail(i)} />
+              ) : null,
             )}
           </div>
           <button type="button" className="btn btn-primary" disabled={!boardChoice || !valid(boardChoice)} onClick={() => boardChoice && resolve(boardChoice)}>

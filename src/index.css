@@ -113,7 +113,6 @@ button { font: inherit; color: inherit; }
 
 button.card { cursor: pointer; }
 button.card:hover:not(:disabled) { translate: 0 -3px; }
-button.card:disabled { cursor: default; }
 .card.is-selected { translate: 0 -5px; }
 .card.is-selected .card-face { box-shadow: 0 0 0 2px var(--ink), 0 10px 22px rgb(0 0 0 / 0.5); }
 .card.is-ghost .card-face { box-shadow: 0 0 0 2px var(--suit), 0 0 22px color-mix(in srgb, var(--suit) 45%, transparent); }
@@ -394,11 +393,9 @@ button.card:disabled { cursor: default; }
 .decision-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .decision-groups { display: flex; flex-wrap: wrap; gap: 18px 28px; }
 .decision-group h3 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
-.decision button.card:disabled { opacity: 0.35; }
 .pick { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .pick-controls { display: flex; gap: 4px; }
 .pick-origin { color: var(--muted); font-size: 11px; }
-.pick-cost { font: 700 13px var(--display); display: inline-flex; gap: 4px; align-items: center; }
 .log-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
 .log-option { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
 .log-option h3 { font-size: 16px; }

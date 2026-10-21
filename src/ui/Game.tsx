@@ -73,7 +73,6 @@ export function Game({ session, act, undo, quit, setHandOrder }: Props) {
 
   const inspectValue = {
     inspectedId,
-    inspect: (card: Card) => setInspectedId(card.id),
     activate: (card: Card) => (card.id === inspectedId ? turn(card) : setInspectedId(card.id)),
   }
 
