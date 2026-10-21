@@ -66,6 +66,9 @@ function Scan({ decision, resolve }: FormProps<'scan'>) {
   const [order, setOrder] = useState<string[]>(decision.cards.map((c) => c.id))
   const discard = decision.cards.filter((c) => !order.includes(c.id)).map((c) => c.id)
   const byId = (id: string) => decision.cards.find((c) => c.id === id)!
+  const shuffledIn = (id: string) =>
+    decision.reshuffledAfter !== undefined && decision.cards.findIndex((c) => c.id === id) >= decision.reshuffledAfter
+  const origin = (id: string) => decision.reshuffledAfter !== undefined && <span className="pick-origin">{shuffledIn(id) ? 'Shuffled in' : 'From your deck'}</span>
   const move = (i: number, by: number) => {
     const next = [...order]
     ;[next[i], next[i + by]] = [next[i + by], next[i]]
@@ -90,11 +93,14 @@ function Scan({ decision, resolve }: FormProps<'scan'>) {
       <Prompt title="Scan">
         These are the top {decision.cards.length} cards of your deck. Discard any, and put the rest back in the order you want; the leftmost goes on top.
         {decision.drawAfter && ' Then you draw 1.'}
+        {decision.reshuffledAfter !== undefined &&
+          ` Your deck had ${decision.reshuffledAfter === 0 ? 'no cards' : decision.reshuffledAfter === 1 ? 'only 1 card' : `only ${decision.reshuffledAfter} cards`}, so your discard pile was shuffled in under ${decision.reshuffledAfter === 1 ? 'it' : 'them'} for the rest.`}
       </Prompt>
       <div className="decision-row">
         {order.map((id, i) => (
           <div key={id} className="pick">
             <CardView card={byId(id)} size="sm" />
+            {origin(id)}
             <div className="pick-controls">
               <button type="button" className="btn btn-small" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${cardName(byId(id))} up the deck`}>
                 ◀
@@ -111,6 +117,7 @@ function Scan({ decision, resolve }: FormProps<'scan'>) {
         {discard.map((id) => (
           <div key={id} className="pick">
             <CardView card={byId(id)} size="sm" dim />
+            {origin(id)}
             <div className="pick-controls">
               <button type="button" className="btn btn-small" onClick={() => setOrder([...order, id])}>
                 Keep

@@ -27,21 +27,23 @@ export function SuitIcon({ suit, size = 16, outline = false }: { suit: Suit; siz
 
 interface CardViewProps {
   card: Card
-  /** Played action side up: the card is turned 180°. */
+  /** Turned 180°, action side up. */
   flipped?: boolean
   size?: 'xs' | 'sm' | 'md' | 'lg'
+  /** Picked in a decision panel. */
   selected?: boolean
   ghost?: boolean
   dim?: boolean
   /** Show only the top band, as for a card tucked under a Module. */
   tucked?: boolean
+  /** A choice in a decision panel: clicking picks it (and inspects it) instead of turning it. */
   onClick?: () => void
   disabled?: boolean
   children?: ReactNode
 }
 
 export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tucked, onClick, disabled, children }: CardViewProps) {
-  const { inspectedId, inspect } = useContext(InspectContext)
+  const { inspectedId, inspect, activate } = useContext(InspectContext)
   const className = [
     'card',
     `card-${size}`,
@@ -54,37 +56,29 @@ export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tuc
   ]
     .filter(Boolean)
     .join(' ')
-  const label = `${cardName(card)}, ${actionName(card)}${flipped ? ', action side' : ''}`
-  const body = (
-    <>
+  const label = `${cardName(card)}, ${actionName(card)}${flipped ? ', action side up' : ''}`
+  const click = onClick
+    ? () => {
+        inspect(card)
+        onClick()
+      }
+    : () => activate(card)
+
+  return (
+    <button
+      type="button"
+      className={className}
+      data-suit={card.suit}
+      onClick={click}
+      disabled={disabled}
+      aria-label={label}
+      aria-pressed={onClick ? !!selected : undefined}
+      aria-current={inspectedId === card.id ? 'true' : undefined}
+    >
       <span className="card-face">
         <img src={cardImage(card)} alt="" draggable={false} />
       </span>
       {children}
-    </>
-  )
-  const show = () => inspect(card)
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        className={className}
-        data-suit={card.suit}
-        onClick={onClick}
-        disabled={disabled}
-        onMouseEnter={show}
-        onFocus={show}
-        aria-label={label}
-        aria-pressed={selected}
-      >
-        {body}
-      </button>
-    )
-  }
-  return (
-    <div className={className} data-suit={card.suit} onMouseEnter={show} role="img" aria-label={label}>
-      {body}
-    </div>
+    </button>
   )
 }

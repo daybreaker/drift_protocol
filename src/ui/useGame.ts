@@ -10,6 +10,8 @@ export interface Session {
   undo: GameState[]
   /** What happened at the end of the previous turn. */
   summary: string[]
+  /** The player's arrangement of their hand, by card id. Display only. */
+  handOrder?: string[]
 }
 
 function load(): Session | null {
@@ -58,5 +60,7 @@ export function useGame() {
 
   const quit = useCallback(() => setSession(null), [])
 
-  return { session, act, undo, start, quit }
+  const setHandOrder = useCallback((handOrder: string[]) => setSession((s) => (s ? { ...s, handOrder } : s)), [])
+
+  return { session, act, undo, start, quit, setHandOrder }
 }
