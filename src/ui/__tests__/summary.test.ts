@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apply, emptyState, makeCard, type GameState } from '../../engine'
+import { apply, emptyState, makeAsteroid, makeCard, type GameState } from '../../engine'
 import { summarizeEndTurn } from '../summary'
 
 const c = makeCard
@@ -23,6 +23,8 @@ describe('summarizeEndTurn', () => {
     expect(end(board())).toContain('Data 12 drifted out of the Airlock and is now a hazard.')
     const debris = board({ rail: [c('crew', 4), null, null, null, null] })
     expect(end(debris)).toContain('Crew 4 drifted out of the Airlock as debris.')
+    const rock = board({ calm: true, rail: [makeAsteroid(1), null, null, null, null] })
+    expect(end(rock)).toContain('Asteroid drifted out of the Airlock and is now a hazard.')
   })
 
   it('reports the first reshuffle and Module production', () => {

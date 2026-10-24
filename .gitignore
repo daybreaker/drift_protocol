@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Card renderer output (copy changed cards into public/cards)
+tools/jpg
+tools/tmp.html

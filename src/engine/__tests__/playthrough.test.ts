@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { apply, legalActions, newGame } from '../engine'
 import { nextRandom } from '../rng'
-import type { Action, Card, GameState } from '../types'
+import type { Action, FieldCard, GameState } from '../types'
 
 const allIds = (s: GameState): string[] => [
   ...s.deck, ...s.hand, ...s.discard, ...s.yard, ...s.threat, ...s.breach, ...s.course, ...s.archive,
   ...s.circuit.map((e) => e.card),
-  ...s.rail.filter((c): c is Card => c !== null),
+  ...s.rail.filter((c): c is FieldCard => c !== null),
   ...Object.values(s.modules).flatMap((m) => m.stationed),
 ].map((c) => c.id)
 
@@ -33,13 +33,13 @@ function botGame(seed: number, maxSteps = 2000): GameState[] {
 }
 
 describe('bot playthroughs', () => {
-  it.each(Array.from({ length: 20 }, (_, i) => i + 1))('seed %i: every listed action applies, inputs are untouched, all 48 cards stay accounted for', (seed) => {
+  it.each(Array.from({ length: 20 }, (_, i) => i + 1))('seed %i: every listed action applies, inputs are untouched, all 50 cards stay accounted for', (seed) => {
     const states = botGame(seed)
     expect(states.at(-1)!.outcome).not.toBeNull()
     for (const s of states) {
       const ids = allIds(s)
-      expect(ids).toHaveLength(48)
-      expect(new Set(ids).size).toBe(48)
+      expect(ids).toHaveLength(50)
+      expect(new Set(ids).size).toBe(50)
       expect(Object.values(s.pool).every((n) => n >= 0)).toBe(true)
     }
   })

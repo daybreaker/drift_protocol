@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { apply } from '../engine'
-import type { Card, GameState } from '../types'
+import type { Card, FieldCard, GameState } from '../types'
 import { c, entry, filler, pool, state } from './helpers'
 
 const end = (s: GameState) => apply(s, { type: 'endTurn' })
-const ids = (cards: (Card | null)[]) => cards.map((x) => x?.id ?? null)
+const ids = (cards: (FieldCard | null)[]) => cards.map((x) => x?.id ?? null)
 const rail = (): (Card | null)[] => [c('data', 12), c('crew', 6), c('data', 7), c('power', 3), c('shields', 9)]
 const board = (o: Partial<GameState> = {}) =>
   state({ calm: false, rail: rail(), yard: filler(10, 'data'), deck: filler(10), ...o })

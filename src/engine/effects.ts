@@ -2,7 +2,7 @@
 import { yieldOf } from './cards'
 import { IllegalActionError } from './errors'
 import { canStationAt, draw, production, reshuffle, salvagePayment, takeFromHand } from './rules'
-import { SUITS, type Card, type Decision, type DecisionChoice, type GameState } from './types'
+import { isAsteroid, SUITS, type Card, type Decision, type DecisionChoice, type GameState } from './types'
 
 /**
  * Runs the action of `rank` as if played at Circuit position `position`.
@@ -106,7 +106,7 @@ export function isValidChoice(s: GameState, d: Decision, choice: DecisionChoice)
     case 'log2':
       if (choice.kind !== d.kind) return false
       if (choice.option === 'B') return validPicks(s, 'log2', choice.archive, 3)
-      return choice.railIndices[0] !== choice.railIndices[1] && choice.railIndices.every((i) => !!s.rail[i])
+      return choice.railIndices[0] !== choice.railIndices[1] && choice.railIndices.every((i) => takeable(s, i))
   }
 }
 
@@ -147,7 +147,7 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
     case 'tractorBeam': {
       if (choice.railIndex === null) break
       s.pool = salvagePayment(s, choice.railIndex, 2)!
-      const card = s.rail[choice.railIndex]!
+      const card = s.rail[choice.railIndex] as Card // salvagePayment ruled out an Asteroid
       s.rail[choice.railIndex] = null
       if (choice.railIndex === 0) s.turnFlags.salvagedAirlock = true
       if ((d as DecisionOf<'tractorBeam'>).toHand) s.hand.push(card)
@@ -173,7 +173,7 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
     case 'log2':
       if (choice.option === 'A') {
         for (const i of choice.railIndices) {
-          s.hand.push(s.rail[i]!)
+          s.hand.push(s.rail[i] as Card) // isValidChoice ruled out an Asteroid
           s.rail[i] = null
         }
       } else {
@@ -247,4 +247,10 @@ export function choicesFor(s: GameState, d: Decision): DecisionChoice[] {
     }
   })()
   return all.filter((choice) => isValidChoice(s, d, choice))
+}
+
+/** A Rail slot holding a card Log 2A can take: any numbered card, never an Asteroid. */
+function takeable(s: GameState, railIndex: number): boolean {
+  const card = s.rail[railIndex]
+  return !!card && !isAsteroid(card)
 }

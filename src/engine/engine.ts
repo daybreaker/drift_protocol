@@ -1,4 +1,4 @@
-import { cost, fullDeck, yieldOf } from './cards'
+import { cost, fullDeck, makeAsteroid, yieldOf } from './cards'
 import { choicesFor, isValidChoice, resolveDecision, runAction } from './effects'
 import { IllegalActionError } from './errors'
 import { shuffle } from './rng'
@@ -14,7 +14,7 @@ import {
   takeFromHand,
   draw,
 } from './rules'
-import { SUITS, type Action, type GameOptions, type GameState, type Side, type Suit } from './types'
+import { SUITS, type Action, type Card, type GameOptions, type GameState, type Side, type Suit } from './types'
 
 export { IllegalActionError }
 
@@ -66,7 +66,8 @@ export function newGame(options: GameOptions): GameState {
   s.rng = options.seed | 0
   s.options = { ...DIFFICULTY[difficulty] }
   ;[s.deck, s.rng] = shuffle(all.filter((c) => isStarter(c.suit, c.rank)), s.rng)
-  ;[s.yard, s.rng] = shuffle(all.filter((c) => !isStarter(c.suit, c.rank)), s.rng)
+  const field = [...all.filter((c) => !isStarter(c.suit, c.rank)), makeAsteroid(1), makeAsteroid(2)]
+  ;[s.yard, s.rng] = shuffle(field, s.rng)
   s.rail = s.yard.splice(0, 5)
   draw(s, 5)
   systemsOnline(s)
@@ -187,7 +188,7 @@ export function apply(state: GameState, action: Action): GameState {
     }
     case 'salvage': {
       s.pool = salvagePayment(s, action.railIndex)!
-      s.discard.push(s.rail[action.railIndex]!)
+      s.discard.push(s.rail[action.railIndex] as Card) // salvagePayment ruled out an Asteroid
       s.rail[action.railIndex] = null
       if (action.railIndex === 0) s.turnFlags.salvagedAirlock = true
       s.turnFlags.playedOrSpent = true

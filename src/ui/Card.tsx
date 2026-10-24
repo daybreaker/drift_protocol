@@ -1,5 +1,5 @@
 import { useContext, type ReactNode } from 'react'
-import type { Card, Suit } from '../engine'
+import { isAsteroid, type FieldCard, type Suit } from '../engine'
 import { InspectContext } from './inspect'
 import { actionName, cardImage, cardName } from './text'
 
@@ -26,7 +26,7 @@ export function SuitIcon({ suit, size = 16, outline = false }: { suit: Suit; siz
 }
 
 interface CardViewProps {
-  card: Card
+  card: FieldCard
   /** Turned 180°, action side up. */
   flipped?: boolean
   size?: 'xs' | 'sm' | 'md' | 'lg'
@@ -59,7 +59,7 @@ export function CardView({ card, flipped, size = 'md', selected, ghost, dim, tuc
     <button
       type="button"
       className={className}
-      data-suit={card.suit}
+      data-suit={isAsteroid(card) ? 'asteroid' : card.suit}
       onClick={() => activate(card)}
       aria-label={label}
       aria-current={inspectedId === card.id ? 'true' : undefined}

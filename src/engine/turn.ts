@@ -2,7 +2,7 @@
 // Mutates a draft, like rules.ts.
 import { cost, JUMP_THRESHOLDS } from './cards'
 import { breachLimit, draw, emptyPool, freshTurnFlags, isStaffed, perkActive, systemsOnline } from './rules'
-import { SUITS, type Card, type GameState } from './types'
+import { isAsteroid, SUITS, type FieldCard, type GameState } from './types'
 
 export function endTurn(s: GameState): void {
   // Impact
@@ -17,11 +17,12 @@ export function endTurn(s: GameState): void {
     const card = s.rail[i]
     if (!card) return
     s.rail[i] = null
-    ;(s.calm || cost(card.rank) === 2 ? s.archive : s.threat).push(card)
+    const debris = !isAsteroid(card) && (s.calm || cost(card.rank) === 2)
+    ;(debris ? s.archive : s.threat).push(card)
   }
   if (!s.turnFlags.salvagedAirlock) vent(0)
   if (s.logs.log2 === 'A') vent(1)
-  const rail = s.rail.filter((c): c is Card => c !== null)
+  const rail = s.rail.filter((c): c is FieldCard => c !== null)
   while (rail.length < 5) {
     const next = s.yard.shift()
     if (!next) {

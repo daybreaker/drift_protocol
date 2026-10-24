@@ -19,7 +19,14 @@ previewPlay(state, cardId, side) → GameState   // placement plus effects that 
 
 ## Cards
 
-48 numbered cards: ranks 1–12 in four suits. Modules are not cards in the engine; they are fixed slots.
+48 numbered cards (ranks 1–12 in four suits) and 2 **Asteroids**, 50 cards in all. Modules are not cards in the engine; they are fixed slots.
+
+An **Asteroid** (`asteroid-1`, `asteroid-2`; Jokers in the playtest deck) has no suit, rank, yield or action. It starts in the Yard and only ever moves between the Yard, Rail, Threat, Breach and Archive:
+
+- It cannot be salvaged, by Salvage, Tractor Beam or Log 2A.
+- When it drifts out of the Airlock it always becomes a hazard, even during calm start.
+- Neutralizing it costs 5, paid in Shields only, and it always goes to Archive (it can never be kept).
+- It takes no Module offline. If it hits, it goes to Breach like any hazard.
 
 | Suit | Resource | Wild for |
 | --- | --- | --- |
@@ -55,6 +62,8 @@ previewPlay(state, cardId, side) → GameState   // placement plus effects that 
 type Suit = 'power' | 'crew' | 'data' | 'shields'
 type Side = 'resource' | 'action'
 interface Card { id: string; suit: Suit; rank: number }   // id like "data-08"
+interface Asteroid { id: string; kind: 'asteroid' }        // id "asteroid-1" or "asteroid-2"
+type FieldCard = Card | Asteroid                            // what the Yard, Rail, Threat, Breach and Archive hold
 
 interface CircuitEntry { card: Card; side: Side; synced: boolean; cascaded: boolean; plotted: boolean }
 
@@ -65,12 +74,12 @@ interface GameState {
   hand: Card[]
   discard: Card[]
   circuit: CircuitEntry[]
-  rail: (Card | null)[]             // length 5; index 0 = Airlock, 1 = Inner Lock, 2–3 = Rail, 4 = Intake
-  yard: Card[]                      // index 0 = top
-  threat: Card[]
-  breach: Card[]                    // last element = top
+  rail: (FieldCard | null)[]        // length 5; index 0 = Airlock, 1 = Inner Lock, 2–3 = Rail, 4 = Intake
+  yard: FieldCard[]                 // index 0 = top
+  threat: FieldCard[]
+  breach: FieldCard[]               // last element = top
   course: Card[]
-  archive: Card[]
+  archive: FieldCard[]
   modules: Record<Suit, { stationed: Card[]; capacity: number }>
   pool: Record<Suit, number>        // resources this turn
   turnFlags: { overdrive: number; captainNext: boolean; patchDiscount: number; salvagedAirlock: boolean; playedOrSpent: boolean; production: Record<Suit, number> }
@@ -88,8 +97,8 @@ interface GameState {
 | Action | Legal when |
 | --- | --- |
 | `{ type: 'playCard', cardId, side }` | card in hand; no pending decisions |
-| `{ type: 'salvage', railIndex }` | rail slot occupied; pool can pay |
-| `{ type: 'neutralize', threatIndex, keep: 'discard' \| 'archive' }` | pool can pay |
+| `{ type: 'salvage', railIndex }` | rail slot holds a numbered card; pool can pay |
+| `{ type: 'neutralize', threatIndex, keep: 'discard' \| 'archive' }` | pool can pay; `keep: 'discard'` is never legal for an Asteroid |
 | `{ type: 'station', cardId, module }` | card in hand; Module online and below capacity; enough Crew |
 | `{ type: 'plot', circuitIndex }` / `{ type: 'plotFromHand', cardId }` | the card's Cost in Data; not already plotted; from hand only with Nav Core staffed and online |
 | `{ type: 'recall', module, cardId }` | before the first play or spend this turn |
@@ -101,7 +110,7 @@ interface GameState {
 1. **Systems Online** (start of turn, automatic). Each online Module produces, for each stationed card, its yield, +1 if its suit matches the Module. Production is recorded in `turnFlags.production` so `recall` can refund it.
 2. **Operate.** The player sends actions until `endTurn`.
 3. **Impact.** All Threat cards move to Breach. If Breach ≥ limit → lost (`breach`).
-4. **Drift.** Unless the Airlock card was salvaged this turn, vent `rail[0]`. With Log 2A, also vent `rail[1]`. A vented card goes to Archive if `calm` or its Cost is 2; otherwise to Threat. Then compact the Rail toward the Airlock (keep order), and refill from the Yard into the Intake end to 5 cards. If the Yard is empty while a slot needs filling → lost (`yard`).
+4. **Drift.** Unless the Airlock card was salvaged this turn, vent `rail[0]`. With Log 2A, also vent `rail[1]`. A vented Asteroid goes to Threat. Any other vented card goes to Archive if `calm` or its Cost is 2; otherwise to Threat. Then compact the Rail toward the Airlock (keep order), and refill from the Yard into the Intake end to 5 cards. If the Yard is empty while a slot needs filling → lost (`yard`).
 5. **Cleanup.** Circuit cards go to discard, plotted ones to the Course. Hand goes to discard. Draw 5 (6 with Quarters staffed and online). Jump check (below). Reset `pool` and `turnFlags`, then run Systems Online for the next turn.
 
 ## Playing a card
@@ -118,7 +127,7 @@ Let `prev` = the last Circuit entry (either side), or none.
 ## Spending and payment
 
 - **Salvage** cost = max(0, Cost − slot discount); slot discount is 2 for the Airlock, 1 for the Inner Lock. Pay with the card's suit, then Power. The card goes to discard. Its slot stays empty until Drift.
-- **Neutralize** cost = max(0, Cost − patchDiscount) + (Log 2B ? 1 : 0) to archive the hazard, +2 more to take it into your discard pile instead. Pay with the hazard's suit, then Shields.
+- **Neutralize** cost = max(0, Cost − patchDiscount) + (Log 2B ? 1 : 0) to archive the hazard, +2 more to take it into your discard pile instead. Pay with the hazard's suit, then Shields. An Asteroid's Cost is 5, it is paid in Shields only, and it can only be archived.
 - **Station** cost = Cost, paid in Crew only.
 - **Plot** cost = the card's Cost, in Data only.
 - Auto-pay spends the exact suit first, then the wild.
@@ -144,7 +153,7 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 ## Setup
 
 - Starting deck: all four 1s, all four 2s, plus two 3s (default: power and shields; any two suits allowed).
-- Yard: the other 38 cards, shuffled. Rail: 5 cards from the Yard. Draw 5. `calm = true`.
+- Yard: the other 38 numbered cards and both Asteroids, shuffled together (40 cards). Rail: 5 cards from the Yard. Draw 5. `calm = true`.
 - Difficulty: **Cadet** starts with all four 3s and Breach limit 6. **Standard** Breach limit 5. **Veteran** Breach limit 4 and jumpBonus 5.
 
 ## Rulings (decisions not spelled out in the rulebook)
@@ -168,3 +177,4 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 17. **Keeping a hazard** costs 2 more than archiving it: neutralize-and-archive costs the base amount above, neutralize-and-keep costs that +2. Patch's discount and Log 2B's +1 change only the base amount; the +2 always applies. (Changes the rulebook, where a neutralized hazard could be kept for the same price.)
 18. **Plotting** costs the card's Cost in Data (2, 3 or 5), for Plot and Plot from hand alike. Navigator still plots for free. (Changes the rulebook's flat 2 Data, so high cards are dearer to commit.)
 19. **Jump 1** needs 14 total rank, up from 11. Jumps 2 and 3 stay at 20 and 30.
+20. **Asteroids** (two, added to the Yard) cannot be salvaged and always become hazards when they drift out of the Airlock, calm start or not. Neutralizing one costs 5 in Shields only and archives it; Patch's discount and Log 2B's +1 apply as for any hazard. One that hits goes to Breach, and a Breach Asteroid moved back to the Yard (Patch's Sync, Log 1B) can drift in again. (New to the rulebook: Jokers in the playtest deck.)

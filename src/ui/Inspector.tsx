@@ -1,11 +1,11 @@
-import { salvageCost, type Action, type Card, type GameState, type Side } from '../engine'
+import { isAsteroid, salvageCost, type Action, type Card, type FieldCard, type GameState, type Side } from '../engine'
 import { locate } from './locate'
 import { costLine, playLabel } from './payment'
 import { actionName, cardImage, cardName } from './text'
 import type { Preview } from './Tray'
 
 interface Props {
-  card: Card | null
+  card: FieldCard | null
   game: GameState
   view: GameState
   preview: Preview | null
@@ -46,7 +46,7 @@ export function Inspector({ card, game, view, preview, setPreview, flipped, turn
 }
 
 function InspectorActions({ card, game, previewing, setPreview, handSide, run, can }: {
-  card: Card
+  card: FieldCard
   game: GameState
   previewing: Preview | null
   setPreview: (p: Preview | null) => void
@@ -56,21 +56,22 @@ function InspectorActions({ card, game, previewing, setPreview, handSide, run, c
 }) {
   const blocked = game.pending.length > 0 || game.outcome !== null
 
-  if (previewing) {
+  const handCard = game.hand.find((c) => c.id === card.id)
+  if (previewing && handCard) {
     return (
       <div className="inspector-actions">
         <button type="button" className="btn btn-primary" onClick={() => run({ type: 'playCard', cardId: card.id, side: previewing.side })}>
-          {playLabel(card, previewing.side)}
+          {playLabel(handCard, previewing.side)}
         </button>
         <button type="button" className="btn" onClick={() => setPreview(null)}>Cancel</button>
       </div>
     )
   }
 
-  if (game.hand.some((c) => c.id === card.id)) {
+  if (handCard) {
     return (
       <div className="inspector-actions">
-        <button type="button" className="btn btn-primary" disabled={blocked} onClick={() => setPreview({ cardId: card.id, side: handSide(card) })}>
+        <button type="button" className="btn btn-primary" disabled={blocked} onClick={() => setPreview({ cardId: card.id, side: handSide(handCard) })}>
           Add to Circuit
         </button>
       </div>
@@ -79,6 +80,7 @@ function InspectorActions({ card, game, previewing, setPreview, handSide, run, c
 
   const railIndex = game.rail.findIndex((c) => c?.id === card.id)
   if (railIndex >= 0) {
+    if (isAsteroid(card)) return <p className="inspector-note">Asteroids can't be salvaged. This one becomes a hazard when it drifts out of the Airlock.</p>
     const action: Action = { type: 'salvage', railIndex }
     const amount = salvageCost(game, railIndex)!
     const pay = costLine(game, amount, card.suit, 'salvage')

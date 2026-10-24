@@ -1,4 +1,4 @@
-import { ACTION_NAMES, type Card, type Suit } from '../engine'
+import { ACTION_NAMES, isAsteroid, type FieldCard, type Suit } from '../engine'
 
 export const SUIT_NAME: Record<Suit, string> = { power: 'Power', crew: 'Crew', data: 'Data', shields: 'Shields' }
 
@@ -25,15 +25,17 @@ export const railLeftToRight = <T,>(rail: T[]): [T, number][] => rail.map((x, i)
 /** The wild resource for each kind of payment. */
 export const WILD = { salvage: 'power', neutralize: 'shields' } as const
 
-export const cardName = (c: Card): string => `${SUIT_NAME[c.suit]} ${c.rank}`
-export const actionName = (c: Card): string => ACTION_NAMES[c.rank]
+export const cardName = (c: FieldCard): string => (isAsteroid(c) ? 'Asteroid' : `${SUIT_NAME[c.suit]} ${c.rank}`)
+/** An Asteroid has no action; it is only ever a hazard. */
+export const actionName = (c: FieldCard): string => (isAsteroid(c) ? 'Hazard' : ACTION_NAMES[c.rank])
 
 const base = import.meta.env?.BASE_URL ?? '/'
-export const cardImage = (c: Card): string => `${base}cards/${SUIT_NAME[c.suit]}-${String(c.rank).padStart(2, '0')}.jpg`
+export const cardImage = (c: FieldCard): string =>
+  isAsteroid(c) ? `${base}cards/Asteroid.jpg` : `${base}cards/${SUIT_NAME[c.suit]}-${String(c.rank).padStart(2, '0')}.jpg`
 export const moduleImage = (m: Suit): string => `${base}cards/Module-${MODULE_NAME[m].replace(' ', '')}.jpg`
 
 /** "Data 12", "Data 12 and Crew 9", "Data 12, Crew 9 and Power 6". */
-export function listCards(cards: Card[]): string {
+export function listCards(cards: FieldCard[]): string {
   const names = cards.map(cardName)
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 }
