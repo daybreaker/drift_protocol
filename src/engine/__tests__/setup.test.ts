@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { newGame } from '../engine'
-import type { Card, GameState } from '../types'
+import type { FieldCard, GameState } from '../types'
 
-const allCards = (s: GameState): Card[] => [
+const allCards = (s: GameState): FieldCard[] => [
   ...s.deck, ...s.hand, ...s.discard, ...s.yard, ...s.threat, ...s.breach, ...s.course, ...s.archive,
   ...s.circuit.map((e) => e.card),
-  ...s.rail.filter((c): c is Card => c !== null),
+  ...s.rail.filter((c): c is FieldCard => c !== null),
   ...Object.values(s.modules).flatMap((m) => m.stationed),
 ]
 
@@ -25,15 +25,15 @@ describe('newGame (Standard)', () => {
     expect(s.deck).toHaveLength(5)
   })
 
-  it('fills the Cargo Rail with 5 cards and leaves 33 in the Yard', () => {
+  it('fills the Cargo Rail with 5 cards and leaves 35 in the Yard', () => {
     expect(s.rail.every((c) => c !== null)).toBe(true)
-    expect(s.yard).toHaveLength(33)
+    expect(s.yard).toHaveLength(35)
   })
 
-  it('accounts for all 48 cards exactly once', () => {
+  it('accounts for all 50 cards exactly once', () => {
     const ids = allCards(s).map((c) => c.id)
-    expect(ids).toHaveLength(48)
-    expect(new Set(ids).size).toBe(48)
+    expect(ids).toHaveLength(50)
+    expect(new Set(ids).size).toBe(50)
   })
 
   it('starts calm, on turn 1, with an empty pool and no outcome', () => {
@@ -60,7 +60,7 @@ describe('newGame options', () => {
   it('Cadet starts with all four 3s and a Breach limit of 6', () => {
     const s = newGame({ seed: 1, difficulty: 'cadet' })
     expect([...s.deck, ...s.hand]).toHaveLength(12)
-    expect(s.yard).toHaveLength(31)
+    expect(s.yard).toHaveLength(33)
     expect(s.options.breachLimit).toBe(6)
   })
 

@@ -1,6 +1,12 @@
-"""Render all 52 Drift Protocol cards (48 numbered + 4 Modules) to JPG."""
+"""Render the Drift Protocol cards (48 numbered, 4 Modules, 1 Asteroid) to JPG.
+
+    python tools/make_cards.py            # every card
+    python tools/make_cards.py Asteroid   # only files whose name contains "Asteroid"
+
+Copy the files you changed from tools/jpg/ into public/cards/.
+"""
 import io
-import os
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -9,10 +15,11 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).parent
 OUT = ROOT / "jpg"
 OUT.mkdir(exist_ok=True)
-FONTS = ROOT / "fonts"
+# The same @fontsource packages the app uses (npm install puts them here).
+FONTS = ROOT.parent / "node_modules/@fontsource"
 
-CHAKRA = FONTS / "fontsource-chakra-petch-5.3.0/files"
-PLEX = FONTS / "fontsource-ibm-plex-mono-5.3.0/files"
+CHAKRA = FONTS / "chakra-petch/files"
+PLEX = FONTS / "ibm-plex-mono/files"
 FONT_CSS = f"""
 @font-face{{font-family:'Chakra Petch';font-weight:500;src:url('file://{CHAKRA}/chakra-petch-latin-500-normal.woff2')}}
 @font-face{{font-family:'Chakra Petch';font-weight:700;src:url('file://{CHAKRA}/chakra-petch-latin-700-normal.woff2')}}
@@ -170,12 +177,57 @@ def module(suit):
     return page(body)
 
 
+ROCK = "#B4BCCB"
+ROCK_SVG = """<svg width="{size}" height="{size}" viewBox="0 0 24 24"><path d="M8 2.5l7.5-.5 5 4.5 1.5 7-3 6.5-7 3-6.5-2.5L1.5 14 3 6.5z" fill="{fill}"></path>
+<circle cx="9" cy="9" r="2.2" fill="{hole}"></circle><circle cx="15.5" cy="13.5" r="3" fill="{hole}"></circle><circle cx="8.5" cy="16" r="1.4" fill="{hole}"></circle></svg>"""
+
+
+def rock(size, fill, hole):
+    return ROCK_SVG.format(size=size, fill=fill, hole=hole)
+
+
+def asteroid():
+    """A hazard with no suit or rank: the same at both ends, since it is never turned."""
+    dark = "#0E1420"
+    rule = lambda label, text: f"""<div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:0.18em;color:{ROCK}">{label}</div>
+        <div style="font-size:16px;line-height:1.35;color:#E8EEF7">{text}</div></div>"""
+    half = f"""<div style="height:335px;display:flex;flex-direction:column">
+    <div style="height:140px;box-sizing:border-box;background:{ROCK};padding:22px 26px 22px 20px;display:flex;justify-content:space-between;align-items:flex-start;color:{dark}">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        {rock(58, dark, ROCK)}
+        <div style="font-size:13px;font-weight:600;letter-spacing:0.22em">HAZARD</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+        <div style="font-size:13px;font-weight:600;letter-spacing:0.22em">NEUTRALIZE</div>
+        <div class="disp" style="font-weight:700;font-size:68px;line-height:0.9">5</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;padding:12px 26px 14px;display:flex;flex-direction:column;gap:10px">
+      <div class="disp" style="font-weight:700;font-size:40px;letter-spacing:0.08em;line-height:1">ASTEROID</div>
+      {rule("CARGO RAIL", "Can't be salvaged. Always drifts into the Threat zone.")}
+      {rule("NEUTRALIZE", "Shields only. Archive it; it can't be kept.")}
+    </div>
+  </div>"""
+    body = f"""<div class="card">
+  {half}
+  <div style="height:30px;display:flex;align-items:center;justify-content:center;gap:12px">
+    <div style="width:150px;height:1px;background:#2A3852"></div>{rock(18, ROCK, dark)}<div style="width:150px;height:1px;background:#2A3852"></div>
+  </div>
+  <div style="transform:rotate(180deg)">{half}</div>
+</div>"""
+    return page(body)
+
+
 def main():
     jobs = []
     for suit in SUITS:
         for rank in range(1, 13):
             jobs.append((f"{suit}-{rank:02d}.jpg", numbered(suit, rank)))
         jobs.append((f"Module-{SUITS[suit]['module'].title().replace(' ', '')}.jpg", module(suit)))
+    jobs.append(("Asteroid.jpg", asteroid()))
+    if len(sys.argv) > 1:
+        jobs = [job for job in jobs if any(name in job[0] for name in sys.argv[1:])]
     with sync_playwright() as p:
         browser = p.chromium.launch()
         pg = browser.new_page(viewport={"width": 500, "height": 700}, device_scale_factor=2)

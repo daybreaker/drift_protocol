@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cost, isStaffed, neutralizeCost, perkActive, salvageCost, SUITS, yieldOf, type Action, type Card, type GameState, type Side } from '../engine'
+import { cost, isAsteroid, isStaffed, neutralizeCost, perkActive, salvageCost, SUITS, yieldOf, type Action, type Card, type GameState, type Side } from '../engine'
 import { SuitIcon } from './Card'
 import { costLine, describePayment, playLabel, youHave } from './payment'
 import { actionName, cardName, listAmounts, MODULE_NAME, SUIT_NAME, WILD } from './text'
@@ -81,6 +81,16 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
   const railIndex = game.rail.findIndex((c) => c?.id === id)
   if (railIndex >= 0) {
     const card = game.rail[railIndex]!
+    if (isAsteroid(card)) {
+      return (
+        <TrayMessage
+          text="Asteroids can't be salvaged. When this one drifts out of the Airlock it lands in the Threat zone, even during calm start."
+          note="Neutralizing it there costs 5, in Shields only."
+          buttons={[]}
+          endTurn={endTurn}
+        />
+      )
+    }
     const amount = salvageCost(game, railIndex)!
     const action: Action = { type: 'salvage', railIndex }
     const pay = costLine(game, amount, card.suit, 'salvage')
@@ -98,6 +108,20 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
   const threatIndex = game.threat.findIndex((c) => c.id === id)
   if (threatIndex >= 0) {
     const card = game.threat[threatIndex]
+    if (isAsteroid(card)) {
+      const amount = neutralizeCost(game, threatIndex, 'archive')!
+      const archive: Action = { type: 'neutralize', threatIndex, keep: 'archive' }
+      const pays = describePayment(game.pool, amount, 'shields', 'shields')
+      return (
+        <TrayMessage
+          text={`Neutralize the Asteroid for ${amount} Shields. It goes to the Archive; an Asteroid can't be kept.`}
+          note={pays ? `Pays ${pays}.` : undefined}
+          problem={pays ? undefined : youHave(game, 'shields', 'neutralize')}
+          buttons={[{ label: `Neutralize and archive it (${amount})`, onClick: () => run(archive), disabled: !can(archive) }]}
+          endTurn={endTurn}
+        />
+      )
+    }
     const archiveCost = neutralizeCost(game, threatIndex, 'archive')!
     const keepCost = neutralizeCost(game, threatIndex, 'discard')!
     const keep: Action = { type: 'neutralize', threatIndex, keep: 'discard' }

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type GameState, type Suit } from '../engine'
+import { isAsteroid, isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type FieldCard, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
 import { actionName, cardName, MODULE_NAME, railLeftToRight, SUIT_NAME } from './text'
 
@@ -49,7 +49,7 @@ function Prompt({ title, children }: { title: string; children?: ReactNode }) {
 
 /** A card offered in a decision. Clicking the card inspects it, as anywhere else; the button beneath chooses it. */
 function Pick({ card, label, onChoose, pressed, disabled, flipped, size = 'sm' }: {
-  card: Card
+  card: FieldCard
   label: string
   onChoose: () => void
   pressed?: boolean
@@ -225,7 +225,7 @@ function TractorBeam({ game, decision, resolve, valid }: FormProps<'tractorBeam'
             <Pick
               key={card.id}
               card={card}
-              label={`Salvage for ${salvageCost(game, railIndex, 2)}`}
+              label={isAsteroid(card) ? "Can't salvage" : `Salvage for ${salvageCost(game, railIndex, 2)}`}
               disabled={!valid({ kind: 'tractorBeam', railIndex })}
               onChoose={() => resolve({ kind: 'tractorBeam', railIndex })}
             />
@@ -357,7 +357,7 @@ function Log2({ game, resolve, valid }: { game: GameState; resolve: (c: Decision
           <div className="decision-row">
             {railLeftToRight(game.rail).map(([card, i]) =>
               card ? (
-                <Pick key={card.id} card={card} size="xs" label={rail.includes(i) ? 'Taking' : 'Take'} pressed={rail.includes(i)} onChoose={() => toggleRail(i)} />
+                <Pick key={card.id} card={card} size="xs" label={isAsteroid(card) ? "Can't take" : rail.includes(i) ? 'Taking' : 'Take'} pressed={rail.includes(i)} disabled={isAsteroid(card)} onChoose={() => toggleRail(i)} />
               ) : null,
             )}
           </div>

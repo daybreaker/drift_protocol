@@ -1,4 +1,4 @@
-import { cost, isStaffed, type Card, type GameState } from '../engine'
+import { cost, isAsteroid, isStaffed, type FieldCard, type GameState } from '../engine'
 import { cardName, listAmounts, listCards } from './text'
 
 /** Plain-language lines describing what happened during an endTurn, from the states either side of it. */
@@ -12,12 +12,12 @@ export function summarizeEndTurn(before: GameState, after: GameState): string[] 
   }
   if (after.outcome?.result === 'lost' && after.outcome.reason === 'breach') return lines
 
-  const vented: [Card | null, string][] = []
+  const vented: [FieldCard | null, string][] = []
   if (!before.turnFlags.salvagedAirlock) vented.push([before.rail[0], 'Airlock'])
   if (before.logs.log2 === 'A') vented.push([before.rail[1], 'Inner Lock'])
   for (const [card, slot] of vented) {
     if (!card) continue
-    const hazard = !before.calm && cost(card.rank) !== 2
+    const hazard = isAsteroid(card) || (!before.calm && cost(card.rank) !== 2)
     lines.push(hazard ? `${cardName(card)} drifted out of the ${slot} and is now a hazard.` : `${cardName(card)} drifted out of the ${slot} as debris.`)
   }
   if (after.outcome?.result === 'lost') return lines

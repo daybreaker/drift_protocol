@@ -21,6 +21,7 @@
   --data: #5ec8f2;
   --shields: #7be0a6;
   --danger: #ff5468;
+  --rock: #b4bccb;
 
   --w-xs: clamp(46px, 3.6vw, 66px);
   --w-sm: clamp(64px, 5.4vw, 104px);
@@ -45,6 +46,7 @@ button { font: inherit; color: inherit; }
 [data-suit='crew'] { --suit: var(--crew); }
 [data-suit='data'] { --suit: var(--data); }
 [data-suit='shields'] { --suit: var(--shields); }
+[data-suit='asteroid'] { --suit: var(--rock); }
 .suit-power { color: var(--power); }
 .suit-crew { color: var(--crew); }
 .suit-data { color: var(--data); }

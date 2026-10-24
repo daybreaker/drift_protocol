@@ -10,6 +10,18 @@ export interface Card {
   rank: number
 }
 
+/** A hazard with no suit or rank (Ruling 20). It only moves between the Yard, Rail, Threat, Breach and Archive. */
+export interface Asteroid {
+  /** "asteroid-1" or "asteroid-2". */
+  id: string
+  kind: 'asteroid'
+}
+
+/** What the Yard, Rail, Threat, Breach and Archive can hold: a numbered card or an Asteroid. */
+export type FieldCard = Card | Asteroid
+
+export const isAsteroid = (card: FieldCard): card is Asteroid => 'kind' in card && card.kind === 'asteroid'
+
 export interface CircuitEntry {
   card: Card
   side: Side
@@ -76,14 +88,14 @@ export interface GameState {
   discard: Card[]
   circuit: CircuitEntry[]
   /** length 5; 0 = Airlock, 1 = Inner Lock, 2–3 = Rail, 4 = Intake */
-  rail: (Card | null)[]
+  rail: (FieldCard | null)[]
   /** index 0 = top */
-  yard: Card[]
-  threat: Card[]
+  yard: FieldCard[]
+  threat: FieldCard[]
   /** last element = top */
-  breach: Card[]
+  breach: FieldCard[]
   course: Card[]
-  archive: Card[]
+  archive: FieldCard[]
   modules: Record<Suit, ModuleSlot>
   pool: Pool
   turnFlags: TurnFlags

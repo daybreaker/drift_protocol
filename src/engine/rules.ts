@@ -1,8 +1,8 @@
 // Queries and state helpers shared by the engine. Helpers that change state mutate a draft:
 // `apply` clones its input once and only ever works on that copy.
-import { cost, yieldOf } from './cards'
+import { ASTEROID_COST, cost, yieldOf } from './cards'
 import { shuffle } from './rng'
-import { SUITS, type Card, type GameState, type Pool, type Suit, type TurnFlags } from './types'
+import { isAsteroid, SUITS, type Card, type GameState, type Pool, type Suit, type TurnFlags } from './types'
 
 export const emptyPool = (): Pool => ({ power: 0, crew: 0, data: 0, shields: 0 })
 
@@ -17,8 +17,8 @@ export function freshTurnFlags(): TurnFlags {
   }
 }
 
-/** A Module is offline while any Threat card shares its suit. */
-export const isOnline = (s: GameState, module: Suit): boolean => !s.threat.some((c) => c.suit === module)
+/** A Module is offline while any Threat card shares its suit. Asteroids have no suit. */
+export const isOnline = (s: GameState, module: Suit): boolean => !s.threat.some((c) => !isAsteroid(c) && c.suit === module)
 
 export const isStaffed = (s: GameState, module: Suit): boolean => s.modules[module].stationed.length > 0
 
@@ -45,27 +45,29 @@ export function pay(pool: Pool, amount: number, suit: Suit, wild?: Suit): Pool |
 
 const SLOT_DISCOUNT = [2, 1, 0, 0, 0]
 
-/** Salvage cost of a Rail slot; `extraDiscount` is Tractor Beam's −2. */
+/** Salvage cost of a Rail slot; `extraDiscount` is Tractor Beam's −2. Null if empty or an Asteroid. */
 export function salvageCost(s: GameState, railIndex: number, extraDiscount = 0): number | null {
   const card = s.rail[railIndex]
-  if (!card) return null
+  if (!card || isAsteroid(card)) return null
   return Math.max(0, cost(card.rank) - SLOT_DISCOUNT[railIndex] - extraDiscount)
 }
 
 export function salvagePayment(s: GameState, railIndex: number, extraDiscount = 0): Pool | null {
   const card = s.rail[railIndex]
   const amount = salvageCost(s, railIndex, extraDiscount)
-  if (!card || amount === null) return null
+  if (!card || isAsteroid(card) || amount === null) return null
   return pay(s.pool, amount, card.suit, 'power')
 }
 
 /** Extra cost to take a neutralized hazard into the discard pile instead of archiving it (Ruling 17). */
 export const KEEP_SURCHARGE = 2
 
+/** Null if there is no such hazard, or for keeping an Asteroid, which can only be archived. */
 export function neutralizeCost(s: GameState, threatIndex: number, keep: 'discard' | 'archive'): number | null {
   const card = s.threat[threatIndex]
-  if (!card) return null
-  const base = Math.max(0, cost(card.rank) - s.turnFlags.patchDiscount) + (s.logs.log2 === 'B' ? 1 : 0)
+  if (!card || (isAsteroid(card) && keep === 'discard')) return null
+  const printed = isAsteroid(card) ? ASTEROID_COST : cost(card.rank)
+  const base = Math.max(0, printed - s.turnFlags.patchDiscount) + (s.logs.log2 === 'B' ? 1 : 0)
   return base + (keep === 'discard' ? KEEP_SURCHARGE : 0)
 }
 
@@ -73,7 +75,7 @@ export function neutralizePayment(s: GameState, threatIndex: number, keep: 'disc
   const card = s.threat[threatIndex]
   const amount = neutralizeCost(s, threatIndex, keep)
   if (!card || amount === null) return null
-  return pay(s.pool, amount, card.suit, 'shields')
+  return isAsteroid(card) ? pay(s.pool, amount, 'shields') : pay(s.pool, amount, card.suit, 'shields')
 }
 
 /** Shuffles the discard pile in under the deck. The first reshuffle ends calm start. */

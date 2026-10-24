@@ -9,6 +9,7 @@ import {
   SUITS,
   type Action,
   type Card,
+  type FieldCard,
   type GameState,
   type Side,
 } from '../engine'
@@ -66,16 +67,18 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
   const can = (action: Action) => isLegal(game, action)
 
   const inspected = useMemo(() => (inspectedId ? findCard(game, inspectedId) : null), [game, inspectedId])
+  /** The inspected card when it is in your hand, the only place a card can be played or stationed from. */
+  const inspectedInHand = inspected ? game.hand.find((c) => c.id === inspected.id) : undefined
 
   /** Turning the tentative play switches its side; any other card just turns. */
-  const turn = (card: Card) => {
+  const turn = (card: FieldCard) => {
     if (preview?.cardId === card.id) setPreview({ ...preview, side: preview.side === 'action' ? 'resource' : 'action' })
     else toggleTurned(card.id)
   }
 
   const inspectValue = {
     inspectedId,
-    activate: (card: Card) => (card.id === inspectedId ? turn(card) : setInspectedId(card.id)),
+    activate: (card: FieldCard) => (card.id === inspectedId ? turn(card) : setInspectedId(card.id)),
   }
 
   // The inspector shows Circuit cards on the side they were played, everything else action side up by default.
@@ -99,9 +102,9 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
         if (preview) {
           e.preventDefault()
           run({ type: 'playCard', cardId: preview.cardId, side: preview.side })
-        } else if (inspected && game.hand.some((c) => c.id === inspected.id) && game.pending.length === 0) {
+        } else if (inspectedInHand && game.pending.length === 0) {
           e.preventDefault()
-          setPreview({ cardId: inspected.id, side: handSide(inspected) })
+          setPreview({ cardId: inspectedInHand.id, side: handSide(inspectedInHand) })
         }
       }
     }
@@ -110,7 +113,7 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
   })
 
   const hand = useMemo(() => orderHand(game.hand, session.handOrder ?? []), [game.hand, session.handOrder])
-  const stationCandidate = !preview && inspected && game.hand.some((c) => c.id === inspected.id) ? inspected : null
+  const stationCandidate = !preview && inspectedInHand ? inspectedInHand : null
 
   return (
     <InspectContext.Provider value={inspectValue}>
@@ -125,9 +128,11 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
                 <div key={i} className={`slot ${vents ? 'is-venting' : ''}`}>
                   {card ? (
                     <CardView card={card} size="sm">
-                      <span className="cost-tag" data-affordable={can({ type: 'salvage', railIndex: i })}>
-                        {salvageCost(game, i)}
-                      </span>
+                      {salvageCost(game, i) !== null && (
+                        <span className="cost-tag" data-affordable={can({ type: 'salvage', railIndex: i })}>
+                          {salvageCost(game, i)}
+                        </span>
+                      )}
                     </CardView>
                   ) : (
                     <div className="empty-slot card-sm">Salvaged</div>
@@ -246,11 +251,11 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
 }
 
 /** Finds a card anywhere on the board, so the inspector can keep showing it as it moves. */
-function findCard(s: GameState, id: string): Card | null {
-  const all = [
+function findCard(s: GameState, id: string): FieldCard | null {
+  const all: FieldCard[] = [
     ...s.hand, ...s.deck, ...s.discard, ...s.yard, ...s.threat, ...s.breach, ...s.course, ...s.archive,
     ...s.circuit.map((e) => e.card),
-    ...s.rail.filter((c): c is Card => c !== null),
+    ...s.rail.filter((c): c is FieldCard => c !== null),
     ...SUITS.flatMap((m) => s.modules[m].stationed),
   ]
   return all.find((c) => c.id === id) ?? null
