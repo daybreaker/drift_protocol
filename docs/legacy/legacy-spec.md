@@ -33,10 +33,12 @@ Records mirror the tables a Rails API would have, so they can move to a server u
 ## Core contract
 
 ```ts
-createLegacyGame(input, ctx) → Changes            // the legacy game and its first chapter
-startSession(campaign, ctx) → Changes             // a new Session for the current chapter
-recordAction(session, action, ctx) → Changes      // applies the action, logs it, and finishes the Session if it ended
-undoAction(session, ctx) → Changes
+createLegacyGame(input, ctx) → Changes                     // the legacy game and its first chapter
+startSession(campaign, ctx) → Changes                      // a new Session for the current chapter
+recordAction(campaign, session, action, ctx) → Changes     // applies the action, logs it, and finishes the Session if it ended
+undoAction(session, lastAction, ctx) → Changes             // undoes lastAction, the newest action of this turn
+setHandOrder(session, handOrder, ctx) → Changes            // saves the player's hand order
+mergeChanges(campaign, changes) → Campaign                 // the campaign with changes applied
 ```
 
 - **Pure.** These take records and return the records to write (`Changes`); they never mutate their input or touch storage. `ctx` supplies the clock and new ids, so tests are deterministic.
@@ -54,14 +56,14 @@ undoAction(session, ctx) → Changes
 
 | Position | `story_key` | Title | Content |
 | --- | --- | --- | --- |
-| 1 | `salvage-rights` | Salvage Rights | The base game. |
+| 1 | `salvage-rights` | Salvage Rights | The base game, Asteroids included. |
 
 ## Changes to the base engine *(Draft)*
 
 Kept as small as possible. A base game uses none of them and behaves exactly as `docs/engine-spec.md` says.
 
 - Cards get an optional `mods` (stickers) and an optional action id, so two cards can share a suit and rank with different actions. Card ids for those get a variant suffix.
-- Card count is no longer fixed at 48 in a campaign game. The 48-card invariant stays a base-game check.
+- Card count is no longer fixed at 50 (48 numbered cards and 2 Asteroids) in a campaign game. The 50-card invariant stays a base-game check.
 
 ## Rulings (decisions not spelled out in the design)
 
