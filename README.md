@@ -2,6 +2,8 @@
 
 A solo sci-fi deck-builder where every card is either a resource or an action, and chains reward playing them in the right order. This repo is the playable web version.
 
+**Rules:** https://app.notion.com/p/Rules-3ff7f436dffd81a1a9f8ce68a6163c1e?source=copy_link
+
 ## Status
 
 The rules engine in `src/engine/` is complete and the suite in `src/engine/__tests__` is green, including bot playthroughs that check every listed action applies, `apply` never mutates its input, and all 50 cards (48 numbered and 2 Asteroids) stay accounted for. The board UI is playable: `npm run dev`, choose a difficulty and starting 3s, and play. A game in progress is saved in the browser, and Undo steps back within the current turn.
