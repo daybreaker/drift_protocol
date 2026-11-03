@@ -31,3 +31,23 @@ export function moveId(ids: string[], id: string, to: number): string[] {
   const rest = ids.filter((x) => x !== id)
   return [...rest.slice(0, to), id, ...rest.slice(to)]
 }
+
+export interface Box {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
+/** How far above the hand row a dragged card still rearranges the hand. */
+const HAND_MARGIN = 40
+
+const inside = (p: { x: number; y: number }, b: Box) => p.x >= b.left && p.x <= b.right && p.y >= b.top && p.y <= b.bottom
+
+/** What a card dragged out of the hand is over: the hand (rearrange), the Circuit (add it there) or neither. */
+export function dropTarget(p: { x: number; y: number }, hand: Box, circuit: Box | null): 'hand' | 'circuit' | 'none' {
+  // Read each side explicitly: a DOMRect's sides are getters, so spreading one copies nothing.
+  if (inside(p, { left: hand.left, top: hand.top - HAND_MARGIN, right: hand.right, bottom: hand.bottom })) return 'hand'
+  if (circuit && inside(p, circuit)) return 'circuit'
+  return 'none'
+}

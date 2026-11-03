@@ -1,11 +1,22 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type ReactNode, type Ref } from 'react'
 import { breachLimit, isOnline, isStaffed, JUMP_THRESHOLDS, perkActive, SUITS, type Card, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
 import { MODULE_NAME, MODULE_PERK, SUIT_NAME } from './text'
 
-export function Zone({ area, title, note, tone, children }: { area: string; title: string; note?: string; tone?: 'danger'; children: ReactNode }) {
+interface ZoneProps {
+  area: string
+  title: string
+  note?: string
+  tone?: 'danger'
+  /** While a card is dragged: 'ready' if it could be dropped here, 'over' while it is over this zone. */
+  drop?: 'ready' | 'over' | null
+  ref?: Ref<HTMLElement>
+  children: ReactNode
+}
+
+export function Zone({ area, title, note, tone, drop, ref, children }: ZoneProps) {
   return (
-    <section className={`zone zone-${area}`} style={{ gridArea: area }} data-tone={tone}>
+    <section ref={ref} className={`zone zone-${area}`} style={{ gridArea: area }} data-tone={tone} data-drop={drop ?? undefined}>
       <h2 className="zone-title">{title}</h2>
       {children}
       {note && <p className="zone-note">{note}</p>}
