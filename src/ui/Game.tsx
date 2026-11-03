@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   cost,
   isLegal,
@@ -39,6 +39,8 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
   const { game } = session
   const [inspectedId, setInspectedId] = useState<string | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
+  const circuitZone = useRef<HTMLElement>(null)
+  const [drop, setDrop] = useState<'ready' | 'over' | null>(null)
   /**
    * Cards the player has turned from their default orientation, keyed to where they were turned
    * (turn and place), so a card that moves or comes back next turn starts fresh.
@@ -59,6 +61,13 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
 
   /** Hand cards face action side up unless turned; that is also the side Add to Circuit plays. */
   const handSide = (card: Card): Side => (isTurned(card.id) ? 'resource' : 'action')
+
+  /** Adds a hand card to the Circuit as the tentative play, the way it faces. */
+  const addToCircuit = (card: Card) => {
+    setInspectedId(card.id)
+    setPreview({ cardId: card.id, side: handSide(card) })
+  }
+  const canAdd = (card: Card) => game.pending.length === 0 && isLegal(game, { type: 'playCard', cardId: card.id, side: handSide(card) })
 
   const run = (action: Action) => {
     setPreview(null)
@@ -185,7 +194,7 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
           <Course game={game} view={view} />
         </Zone>
 
-        <Zone area="circuit" title="Circuit">
+        <Zone area="circuit" title="Circuit" ref={circuitZone} drop={drop}>
           <div className="circuit-wrap">
             <div className="circuit">
               {view.circuit.length === 0 ? (
@@ -195,7 +204,7 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
                       {session.summary.map((line) => <li key={line}>{line}</li>)}
                     </ul>
                   )}
-                  <p>Play cards from your hand here, one at a time. Each card checks only the card before it.</p>
+                  <p>Play cards from your hand here, one at a time: drag one up, or select it and press Enter. Each card checks only the card before it.</p>
                 </div>
               ) : (
                 view.circuit.map((e) => (
@@ -228,6 +237,10 @@ export function Game({ session, act, undo, quit, setHandOrder, exit }: Props) {
             previewId={preview?.cardId ?? null}
             flipped={(card) => handSide(card) === 'action'}
             onReorder={setHandOrder}
+            circuit={circuitZone}
+            canAdd={canAdd}
+            onAdd={addToCircuit}
+            onDropState={setDrop}
             emptyNote={`Your hand is empty. End the turn to draw ${perkActive(game, 'crew') ? 6 : 5}.`}
           />
         </Zone>

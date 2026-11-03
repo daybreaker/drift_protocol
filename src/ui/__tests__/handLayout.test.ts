@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeCard } from '../../engine'
-import { moveId, orderHand, reconcileSlots, type Slot } from '../handLayout'
+import { dropTarget, moveId, orderHand, reconcileSlots, type Slot } from '../handLayout'
 
 const [a, b, c, d] = [makeCard('data', 1), makeCard('crew', 2), makeCard('power', 3), makeCard('shields', 4)]
 const ids = (slots: Slot[]) => slots.map((s) => (s.leaving ? `(${s.card.id})` : s.card.id))
@@ -37,5 +37,40 @@ describe('moveId', () => {
   it('moves an id to a new index', () => {
     expect(moveId(['a', 'b', 'c', 'd'], 'a', 2)).toEqual(['b', 'c', 'a', 'd'])
     expect(moveId(['a', 'b', 'c', 'd'], 'd', 0)).toEqual(['d', 'a', 'b', 'c'])
+  })
+})
+
+describe('dropTarget', () => {
+  const hand = { left: 0, top: 500, right: 800, bottom: 700 }
+  const circuit = { left: 0, top: 200, right: 800, bottom: 400 }
+
+  it('reorders while the pointer is over the hand or just above it', () => {
+    expect(dropTarget({ x: 300, y: 600 }, hand, circuit)).toBe('hand')
+    expect(dropTarget({ x: 300, y: 470 }, hand, circuit)).toBe('hand')
+  })
+
+  it('targets the Circuit while the pointer is inside it', () => {
+    expect(dropTarget({ x: 300, y: 300 }, hand, circuit)).toBe('circuit')
+  })
+
+  it('works with boxes whose sides are getters, as a DOMRect has', () => {
+    class Rect {
+      readonly r: { left: number; top: number; right: number; bottom: number }
+      constructor(r: Rect['r']) {
+        this.r = r
+      }
+      get left() { return this.r.left }
+      get top() { return this.r.top }
+      get right() { return this.r.right }
+      get bottom() { return this.r.bottom }
+    }
+    expect(dropTarget({ x: 300, y: 600 }, new Rect(hand), new Rect(circuit))).toBe('hand')
+    expect(dropTarget({ x: 300, y: 300 }, new Rect(hand), new Rect(circuit))).toBe('circuit')
+  })
+
+  it('targets nothing elsewhere, or when there is no Circuit to drop on', () => {
+    expect(dropTarget({ x: 300, y: 440 }, hand, circuit)).toBe('none')
+    expect(dropTarget({ x: 900, y: 300 }, hand, circuit)).toBe('none')
+    expect(dropTarget({ x: 300, y: 300 }, hand, null)).toBe('none')
   })
 })
