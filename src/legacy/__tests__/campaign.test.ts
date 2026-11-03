@@ -36,7 +36,7 @@ const endgame = (o: Partial<GameState>): GameState => ({
   ...o,
 })
 /** One End turn from winning: the third Jump is plotted. */
-const aboutToWin = endgame({ jumps: 2, course: [c('power', 12), c('crew', 12), c('data', 3), c('shields', 3)] })
+const aboutToWin = endgame({ jumps: 2, course: [c('power', 12), c('crew', 12), c('data', 7), c('shields', 3)] })
 /** One End turn from losing: a hazard hits a hull at 4 of 5 Breach. */
 const aboutToLose = endgame({ threat: [c('crew', 9)], breach: filler(4).map((x, i) => ({ ...x, id: `b-${i}` })) })
 
