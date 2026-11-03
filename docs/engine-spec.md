@@ -143,7 +143,7 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 
 ## Jumps and Logs
 
-- At cleanup, Jump if the Course has all four suits and total rank ≥ `[14, 20, 30][jumps] + jumpBonus`.
+- At cleanup, Jump if the Course has all four suits and total rank ≥ `[14, 24, 34][jumps] + jumpBonus`.
 - On a Jump: Course and Threat go to Archive, `jumps += 1`, then:
   - Jump 1 → pending Log 1 choice. **A:** a chosen Module gets capacity 2. **B:** all Breach cards go to the bottom of the Yard.
   - Jump 2 → pending Log 2 choice. **A:** take 2 chosen Rail cards into hand; Drift also vents the Inner Lock from now on. **B:** Archive up to 3 cards from hand or discard; neutralizing costs +1 from now on.
@@ -176,5 +176,6 @@ Draw from the top of the deck. If the deck is empty, shuffle the discard into a 
 16. **Shield Array's** +1 Breach limit is checked after Impact moves the hazards, so a Shields hazard hitting this turn does not take it offline for that check.
 17. **Keeping a hazard** costs 2 more than archiving it: neutralize-and-archive costs the base amount above, neutralize-and-keep costs that +2. Patch's discount and Log 2B's +1 change only the base amount; the +2 always applies. (Changes the rulebook, where a neutralized hazard could be kept for the same price.)
 18. **Plotting** costs the card's Cost in Data (2, 3 or 5), for Plot and Plot from hand alike. Navigator still plots for free. (Changes the rulebook's flat 2 Data, so high cards are dearer to commit.)
-19. **Jump 1** needs 14 total rank, up from 11. Jumps 2 and 3 stay at 20 and 30.
+19. **Jump 1** needs 14 total rank, up from 11. (Jumps 2 and 3 were raised later; see Ruling 21.)
 20. **Asteroids** (two, added to the Yard) cannot be salvaged and always become hazards when they drift out of the Airlock, calm start or not. Neutralizing one costs 5 in Shields only and archives it; Patch's discount and Log 2B's +1 apply as for any hazard. One that hits goes to Breach, and a Breach Asteroid moved back to the Yard (Patch's Sync, Log 1B) can drift in again. (New to the rulebook: Jokers in the playtest deck.)
+21. **Jumps 2 and 3** need 24 and 34 total rank, up from 20 and 30. Veteran still adds 5 to each. (Playtest deck: 29 and 39.)

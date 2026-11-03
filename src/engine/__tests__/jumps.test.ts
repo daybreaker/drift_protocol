@@ -61,11 +61,16 @@ describe('Log 1', () => {
 })
 
 describe('Log 2', () => {
-  const course20 = [c('power', 5), c('crew', 5), c('data', 5), c('shields', 5)]
-  const afterJump = (o: Partial<GameState> = {}) => end(board({ jumps: 1, logs: { log1: 'A' }, course: course20, ...o }))
+  const course24 = [c('power', 6), c('crew', 6), c('data', 6), c('shields', 6)]
+  const afterJump = (o: Partial<GameState> = {}) => end(board({ jumps: 1, logs: { log1: 'A' }, course: course24, ...o }))
 
   it('is offered on the second Jump', () => {
     expect(afterJump().pending).toEqual([{ kind: 'log2' }])
+  })
+
+  it('needs 24 rank for Jump 2', () => {
+    const s = afterJump({ course: [c('power', 6), c('crew', 6), c('data', 6), c('shields', 5)] })
+    expect(s.jumps).toBe(1)
   })
 
   it('A: takes two chosen Cargo Rail cards into hand', () => {
@@ -87,9 +92,16 @@ describe('Log 2', () => {
 })
 
 describe('Jump 3', () => {
+  const course34 = [c('power', 9), c('crew', 9), c('data', 8), c('shields', 8)]
+
+  it('needs 34 rank for Jump 3', () => {
+    const s = end(board({ jumps: 2, logs: { log1: 'A', log2: 'B' }, course: [c('power', 9), c('crew', 9), c('data', 8), c('shields', 7)] }))
+    expect(s.jumps).toBe(2)
+    expect(s.outcome).toBeNull()
+  })
+
   it('wins and scores Yard + 3 per staffed Module − 2 per Breach card', () => {
-    const course30 = [c('power', 8), c('crew', 8), c('data', 7), c('shields', 7)]
-    const base = board({ jumps: 2, logs: { log1: 'A', log2: 'B' }, course: course30, breach: [c('crew', 9)] })
+    const base = board({ jumps: 2, logs: { log1: 'A', log2: 'B' }, course: course34, breach: [c('crew', 9)] })
     const s = end({ ...base, modules: { ...base.modules, crew: { stationed: [c('data', 1)], capacity: 1 } } })
     // Yard: 10 − 1 refill = 9. One staffed Module. One Breach card.
     expect(s.outcome).toEqual({ result: 'won', score: 9 + 3 - 2 })
