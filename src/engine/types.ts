@@ -30,6 +30,18 @@ export interface CircuitEntry {
   plotted: boolean
 }
 
+export type ChallengeKey =
+  | 'full-crew' | 'twin-stations' | 'clean-hull' | 'quiet-sky' | 'lean-ship' | 'deep-course' | 'balanced-course' | 'officer-corps'
+  | 'space-junk' | 'scrap-run' | 'hazard-bounty' | 'airlock-rescue' | 'recruitment-drive' | 'signal-boost' | 'hull-repair' | 'heavy-salvage'
+  | 'long-circuit' | 'cascade-run' | 'full-sync' | 'overclock' | 'spectrum' | 'bridge-crew' | 'clean-sweep' | 'salvage-spree'
+
+/** A dealt Jump challenge. `progress` counts a Tally; `done` marks a complete Tally or Feat (State challenges are checked at cleanup). */
+export interface ChallengeSlot {
+  key: ChallengeKey
+  progress: number
+  done: boolean
+}
+
 export interface ModuleSlot {
   stationed: Card[]
   capacity: number
@@ -47,6 +59,9 @@ export interface TurnFlags {
   playedOrSpent: boolean
   /** What Systems Online produced this turn, per Module, so a recall can refund it. */
   production: Pool
+  /** Cards salvaged and hazards neutralized this turn, for the Salvage Spree and Clean Sweep Feats. */
+  salvages: number
+  neutralizes: number
 }
 
 export type Decision =
@@ -59,6 +74,8 @@ export type Decision =
   | { kind: 'engineer'; sync: boolean; engineerIndex: number }
   | { kind: 'log1' }
   | { kind: 'log2' }
+  /** Cadet setup: replace one dealt challenge with the top of the challenge deck, or keep them. */
+  | { kind: 'redeal' }
 
 export type DecisionChoice =
   | { kind: 'chooseResource'; suit: Suit }
@@ -69,6 +86,8 @@ export type DecisionChoice =
   | { kind: 'engineer'; circuitIndex: number }
   | { kind: 'log1'; option: 'A'; module: Suit } | { kind: 'log1'; option: 'B' }
   | { kind: 'log2'; option: 'A'; railIndices: [number, number] } | { kind: 'log2'; option: 'B'; archive: string[] }
+  /** jump: which Jump's challenge to replace (0–2), or null to keep them all. */
+  | { kind: 'redeal'; jump: number | null }
 
 export type Outcome = null | { result: 'won'; score: number } | { result: 'lost'; reason: 'breach' | 'yard' }
 
@@ -103,12 +122,17 @@ export interface GameState {
   jumps: number
   logs: { log1?: 'A' | 'B'; log2?: 'A' | 'B' }
   pending: Decision[]
-  options: { breachLimit: number; jumpBonus: number }
+  /** The challenges dealt for each Jump (one each; two on Veteran). `challenges[jumps]` is active. */
+  challenges: ChallengeSlot[][]
+  /** Undealt challenges, index 0 = top. */
+  challengeDeck: ChallengeKey[]
+  options: { breachLimit: number }
   outcome: Outcome
 }
 
 export type Action =
   | { type: 'playCard'; cardId: string; side: Side }
+  | { type: 'scrap'; cardId: string }
   | { type: 'salvage'; railIndex: number }
   | { type: 'neutralize'; threatIndex: number; keep: 'discard' | 'archive' }
   | { type: 'station'; cardId: string; module: Suit }

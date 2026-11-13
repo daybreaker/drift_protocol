@@ -44,4 +44,17 @@ describe('summarizeEndTurn', () => {
     const course = [c('power', 4), c('crew', 4), c('data', 3), c('shields', 3)]
     expect(end(board({ course }))).toContain('Jump 1 complete.')
   })
+
+  it('names the next challenge after a Jump', () => {
+    const course = [c('power', 4), c('crew', 4), c('data', 3), c('shields', 3)]
+    const lines = end(board({ course, challenges: [[{ key: 'clean-hull', progress: 0, done: false }], [{ key: 'space-junk', progress: 0, done: false }], []] }))
+    expect(lines).toContain('Jump 1 complete.')
+    expect(lines).toContain('Jump 2 needs Space Junk: Neutralize and Archive 4 hazards.')
+  })
+
+  it('says when the Course was ready but the challenge was not', () => {
+    const course = [c('power', 4), c('crew', 4), c('data', 3), c('shields', 3)]
+    const lines = end(board({ course, challenges: [[{ key: 'space-junk', progress: 1, done: false }], [], []] }))
+    expect(lines).toContain('The Course is ready, but Jump 1 still needs Space Junk.')
+  })
 })

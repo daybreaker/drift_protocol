@@ -305,6 +305,19 @@ button.card:hover:not(:disabled) { translate: 0 -3px; }
 .course-suits [data-have='false'] { opacity: 0.55; }
 .course .muted { font-size: 12px; }
 .course-cards { gap: 6px; }
+/* Jump challenges: one row per Jump. The next Jump's row is lit; made Jumps fade. */
+.challenges { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.challenge-leg { display: grid; grid-template-columns: 4.5em 1fr; gap: 2px 10px; padding: 6px 8px; border: 1px solid var(--line-soft); border-radius: 8px; font-size: 12px; }
+.challenge-leg[data-state='active'] { border-color: var(--line); background: var(--raised); }
+.challenge-leg[data-state='made'] { opacity: 0.55; }
+.challenge-leg[data-state='later'] { color: var(--muted); }
+.challenge-jump { grid-row: span 2; color: var(--muted); font-family: var(--display); font-weight: 600; }
+.challenge { display: flex; flex-wrap: wrap; gap: 0 8px; align-items: baseline; }
+.challenge-name { font-family: var(--display); font-weight: 600; }
+.challenge-text { color: var(--muted); }
+.challenge-status { flex-basis: 100%; color: var(--ink); }
+.challenge[data-complete='true'] .challenge-status { color: var(--shields); }
+.challenge[data-complete='true'] .challenge-name::after { content: ' ✓'; color: var(--shields); }
 
 /* Circuit and pool */
 .zone-circuit { grid-area: circuit; }
@@ -455,6 +468,7 @@ button.card:hover:not(:disabled) { translate: 0 -3px; }
 @keyframes turn-over { from { rotate: 0deg; } to { rotate: 180deg; } }
 .start h1 { font-size: clamp(40px, 9vw, 64px); line-height: 1; letter-spacing: 0.03em; }
 .start-premise { font-size: 16px; line-height: 1.65; color: #c9d3e3; max-width: 60ch; }
+.start-notice { max-width: 60ch; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--raised); }
 .start-field { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; border: 0; }
 .start-field legend { font: 600 17px var(--display); margin-bottom: 10px; padding: 0; }
 .choice-list { display: flex; flex-direction: column; gap: 8px; }

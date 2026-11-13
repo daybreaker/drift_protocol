@@ -1,4 +1,5 @@
 export * from './types'
 export * from './cards'
+export { activeChallenges, challenge, CHALLENGES, slotComplete, stateMet, type Challenge, type ChallengeType } from './challenges'
 export { apply, emptyState, IllegalActionError, isLegal, legalActions, newGame, previewPlay } from './engine'
 export { breachLimit, isOnline, isStaffed, KEEP_SURCHARGE, neutralizeCost, perkActive, production, salvageCost } from './rules'

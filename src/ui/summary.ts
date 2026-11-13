@@ -1,4 +1,5 @@
-import { cost, isAsteroid, isStaffed, type FieldCard, type GameState } from '../engine'
+import { activeChallenges, challenge, cost, isAsteroid, isStaffed, type FieldCard, type GameState } from '../engine'
+import { challengeNames, courseQualifies } from './challenges'
 import { cardName, listAmounts, listCards } from './text'
 
 /** Plain-language lines describing what happened during an endTurn, from the states either side of it. */
@@ -23,7 +24,13 @@ export function summarizeEndTurn(before: GameState, after: GameState): string[] 
   if (after.outcome?.result === 'lost') return lines
 
   if (before.calm && !after.calm) lines.push('Your deck ran out and the discard pile was reshuffled. Calm start is over.')
-  if (after.jumps > before.jumps) lines.push(`Jump ${after.jumps} complete.`)
+  if (after.jumps > before.jumps) {
+    lines.push(`Jump ${after.jumps} complete.`)
+    const next = activeChallenges(after)
+    if (next.length > 0) lines.push(`Jump ${after.jumps + 1} needs ${next.map((s) => `${challenge(s.key).name}: ${challenge(s.key).text}`).join(' Also ')}`)
+  } else if (courseQualifies(after, after.course)) {
+    lines.push(`The Course is ready, but Jump ${after.jumps + 1} still needs ${challengeNames(activeChallenges(after))}.`)
+  }
   const produced = listAmounts(after.turnFlags.production)
   if (produced) lines.push(`Modules produced ${produced}.`)
   return lines

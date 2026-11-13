@@ -24,7 +24,7 @@ npm run dev         # Vite dev server
 | --- | --- |
 | `docs/engine-spec.md` | State shape, actions, turn sequence and rulings. The source of truth for the engine. |
 | `src/engine/` | Pure TypeScript rules engine: `newGame`, `legalActions`, `apply`, `previewPlay` in `engine.ts`; shared queries in `rules.ts`, card actions and decisions in `effects.ts`, end of turn in `turn.ts`. No UI imports. |
-| `src/engine/__tests__/` | Vitest specs, one file per area (setup, chaining, actions, spending, end of turn, jumps), plus bot playthroughs. |
+| `src/engine/__tests__/` | Vitest specs, one file per area (setup, chaining, actions, Scrap, spending, end of turn, jumps, challenges), plus bot playthroughs. |
 | `src/ui/` | React board: `Game.tsx` (layout and UI state), `Board.tsx`, `Hand.tsx` (drag to rearrange), `Tray.tsx`, `Inspector.tsx`, `DecisionPanel.tsx` (card and Log choices), `StartScreen.tsx`, `useGame.ts` (session, undo, saving), plus tested helpers (`summary`, `locate`, `payment`, `handLayout`). |
 | `public/cards/` | Card art: 48 numbered cards, 4 Modules and the Asteroid, 1000×1400 JPG. |
 | `tools/make_cards.py` | Regenerates the card JPGs (Playwright + Pillow, fonts from `node_modules/@fontsource`). Pass part of a file name, e.g. `Asteroid`, to render only those cards; copy changed files from `tools/jpg/` into `public/cards/`. |

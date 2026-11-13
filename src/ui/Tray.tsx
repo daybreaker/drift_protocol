@@ -64,14 +64,16 @@ export function Tray({ game, view, inspectedId, preview, setPreview, handSide, r
   if (handCard) {
     const side = handSide(handCard)
     const plotFromHand: Action = { type: 'plotFromHand', cardId: handCard.id }
+    const scrap: Action = { type: 'scrap', cardId: handCard.id }
     const stationable = SUITS.some((m) => can({ type: 'station', cardId: handCard.id, module: m }))
     return (
       <TrayMessage
         text={`${cardName(handCard)} is in your hand, ${side === 'action' ? `action side up (${actionName(handCard)})` : `resource side up (${SUIT_NAME[handCard.suit]})`}. Click it again to turn it.`}
-        note={stationable ? 'You can also station it at a Module.' : undefined}
+        note={`Scrap archives it for good and gains 2 ${SUIT_NAME[handCard.suit]}, without playing it.${stationable ? ' You can also station it at a Module.' : ''}`}
         buttons={[
           { label: 'Add to Circuit', onClick: () => setPreview({ cardId: handCard.id, side }), disabled: !can({ type: 'playCard', cardId: handCard.id, side }) },
           ...(can(plotFromHand) ? [{ label: `Plot from hand for ${cost(handCard.rank)} Data`, onClick: () => run(plotFromHand), secondary: true }] : []),
+          { label: `Scrap for 2 ${SUIT_NAME[handCard.suit]}`, onClick: () => run(scrap), disabled: !can(scrap), secondary: true },
         ]}
         endTurn={endTurn}
       />

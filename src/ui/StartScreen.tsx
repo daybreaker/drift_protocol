@@ -6,12 +6,12 @@ import { cardImage, SUIT_NAME } from './text'
 type Difficulty = NonNullable<GameOptions['difficulty']>
 
 const DIFFICULTIES: { id: Difficulty; name: string; detail: string }[] = [
-  { id: 'cadet', name: 'Cadet', detail: 'Start with all four 3s. The hull fails at 6 Breach cards.' },
+  { id: 'cadet', name: 'Cadet', detail: 'Start with all four 3s, and you may redeal one Jump challenge. The hull fails at 6 Breach cards.' },
   { id: 'standard', name: 'Standard', detail: 'Start with two 3s of your choice. The hull fails at 5 Breach cards.' },
-  { id: 'veteran', name: 'Veteran', detail: 'The hull fails at 4 Breach cards, and each Jump needs 5 more rank.' },
+  { id: 'veteran', name: 'Veteran', detail: 'Each Jump needs two challenges. The hull fails at 4 Breach cards.' },
 ]
 
-export function StartScreen({ start }: { start: (options: GameOptions) => void }) {
+export function StartScreen({ start, notice }: { start: (options: GameOptions) => void; notice?: string }) {
   const [difficulty, setDifficulty] = useState<Difficulty>('standard')
   const [threes, setThrees] = useState<Suit[]>(['power', 'shields'])
   const [seed, setSeed] = useState('')
@@ -41,6 +41,7 @@ export function StartScreen({ start }: { start: (options: GameOptions) => void }
         You are WREN, the maintenance intelligence of the derelict colony ship <i>Halcyon</i>, sliding into a dying star.
         Make three Jumps before the hull fails or the salvage field runs dry.
       </p>
+      {notice && <p className="start-notice" role="status">{notice}</p>}
 
       <fieldset className="start-field">
         <legend>Difficulty</legend>

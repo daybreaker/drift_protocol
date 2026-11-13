@@ -1,7 +1,7 @@
 import { isAsteroid, salvageCost, type Action, type Card, type FieldCard, type GameState, type Side } from '../engine'
 import { locate } from './locate'
 import { costLine, playLabel } from './payment'
-import { actionName, cardImage, cardName } from './text'
+import { actionName, cardImage, cardName, SUIT_NAME } from './text'
 import type { Preview } from './Tray'
 
 interface Props {
@@ -73,6 +73,9 @@ function InspectorActions({ card, game, previewing, setPreview, handSide, run, c
       <div className="inspector-actions">
         <button type="button" className="btn btn-primary" disabled={blocked} onClick={() => setPreview({ cardId: card.id, side: handSide(handCard) })}>
           Add to Circuit
+        </button>
+        <button type="button" className="btn" disabled={blocked} onClick={() => run({ type: 'scrap', cardId: card.id })}>
+          Scrap for 2 {SUIT_NAME[handCard.suit]}
         </button>
       </div>
     )

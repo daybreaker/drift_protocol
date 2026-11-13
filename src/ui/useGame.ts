@@ -3,6 +3,8 @@ import { apply, newGame, type Action, type GameOptions, type GameState } from '.
 import { summarizeEndTurn } from './summary'
 
 const KEY = 'drift-protocol:session:v1'
+/** Where a save from older rules is kept when it can no longer be played, rather than deleting it. */
+const OLD_RULES_KEY = 'drift-protocol:session:old-rules'
 
 export interface Session {
   game: GameState
@@ -14,12 +16,20 @@ export interface Session {
   handOrder?: string[]
 }
 
-function load(): Session | null {
+/** A save from before Jump challenges (Ruling 23) has no challenges and can't be played on. */
+const isCurrent = (session: Session) => Array.isArray(session.game?.challenges)
+
+function load(): { session: Session | null; oldRules: boolean } {
   try {
     const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as Session) : null
+    const session = raw ? (JSON.parse(raw) as Session) : null
+    if (raw && session && !isCurrent(session)) {
+      localStorage.setItem(OLD_RULES_KEY, raw)
+      return { session: null, oldRules: true }
+    }
+    return { session, oldRules: false }
   } catch {
-    return null
+    return { session: null, oldRules: false }
   }
 }
 
@@ -33,7 +43,8 @@ function save(session: Session | null): void {
 }
 
 export function useGame() {
-  const [session, setSession] = useState<Session | null>(load)
+  const [loaded] = useState(load)
+  const [session, setSession] = useState<Session | null>(loaded.session)
   useEffect(() => save(session), [session])
 
   const act = useCallback(
@@ -62,5 +73,7 @@ export function useGame() {
 
   const setHandOrder = useCallback((handOrder: string[]) => setSession((s) => (s ? { ...s, handOrder } : s)), [])
 
-  return { session, act, undo, start, quit, setHandOrder }
+  /** True when a saved game was set aside because it predates the current rules. */
+  const oldRules = loaded.oldRules
+  return { session, act, undo, start, quit, setHandOrder, oldRules }
 }

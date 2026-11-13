@@ -41,7 +41,7 @@ describe('newGame (Standard)', () => {
     expect(s.turn).toBe(1)
     expect(s.pool).toEqual({ power: 0, crew: 0, data: 0, shields: 0 })
     expect(s.outcome).toBeNull()
-    expect(s.options).toEqual({ breachLimit: 5, jumpBonus: 0 })
+    expect(s.options).toEqual({ breachLimit: 5 })
   })
 
   it('is reproducible from its seed', () => {
@@ -64,8 +64,8 @@ describe('newGame options', () => {
     expect(s.options.breachLimit).toBe(6)
   })
 
-  it('Veteran has a Breach limit of 4 and Jumps need +5 rank', () => {
+  it('Veteran has a Breach limit of 4', () => {
     const s = newGame({ seed: 1, difficulty: 'veteran' })
-    expect(s.options).toEqual({ breachLimit: 4, jumpBonus: 5 })
+    expect(s.options).toEqual({ breachLimit: 4 })
   })
 })
