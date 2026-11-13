@@ -1,4 +1,5 @@
-import { cost, fullDeck, makeAsteroid, yieldOf } from './cards'
+import { ASTEROID_COST, cost, fullDeck, makeAsteroid, yieldOf } from './cards'
+import { CHALLENGES, checkFeats, newSlot, recordNeutralize, recordSalvage, tally } from './challenges'
 import { choicesFor, isValidChoice, resolveDecision, runAction } from './effects'
 import { IllegalActionError } from './errors'
 import { shuffle } from './rng'
@@ -14,7 +15,7 @@ import {
   takeFromHand,
   draw,
 } from './rules'
-import { SUITS, type Action, type Card, type GameOptions, type GameState, type Side, type Suit } from './types'
+import { isAsteroid, SUITS, type Action, type Card, type GameOptions, type GameState, type Side, type Suit } from './types'
 
 export { IllegalActionError }
 
@@ -45,15 +46,17 @@ export function emptyState(): GameState {
     jumps: 0,
     logs: {},
     pending: [],
-    options: { breachLimit: 5, jumpBonus: 0 },
+    challenges: [[], [], []],
+    challengeDeck: [],
+    options: { breachLimit: 5 },
     outcome: null,
   }
 }
 
 const DIFFICULTY = {
-  cadet: { breachLimit: 6, jumpBonus: 0 },
-  standard: { breachLimit: 5, jumpBonus: 0 },
-  veteran: { breachLimit: 4, jumpBonus: 5 },
+  cadet: { breachLimit: 6, challengesPerJump: 1 },
+  standard: { breachLimit: 5, challengesPerJump: 1 },
+  veteran: { breachLimit: 4, challengesPerJump: 2 },
 } as const
 
 export function newGame(options: GameOptions): GameState {
@@ -64,11 +67,16 @@ export function newGame(options: GameOptions): GameState {
   const all = fullDeck()
   const s = emptyState()
   s.rng = options.seed | 0
-  s.options = { ...DIFFICULTY[difficulty] }
+  const { breachLimit, challengesPerJump } = DIFFICULTY[difficulty]
+  s.options = { breachLimit }
   ;[s.deck, s.rng] = shuffle(all.filter((c) => isStarter(c.suit, c.rank)), s.rng)
   const field = [...all.filter((c) => !isStarter(c.suit, c.rank)), makeAsteroid(1), makeAsteroid(2)]
   ;[s.yard, s.rng] = shuffle(field, s.rng)
   s.rail = s.yard.splice(0, 5)
+  // Challenges are shuffled after the Yard, so a seed deals the same cards it always did.
+  ;[s.challengeDeck, s.rng] = shuffle(CHALLENGES.map((x) => x.key), s.rng)
+  s.challenges = [0, 1, 2].map(() => s.challengeDeck.splice(0, challengesPerJump).map(newSlot))
+  if (difficulty === 'cadet') s.pending.push({ kind: 'redeal' })
   draw(s, 5)
   systemsOnline(s)
   return s
@@ -103,6 +111,7 @@ export function isLegal(s: GameState, action: Action): boolean {
   if (s.pending.length > 0) return action.type === 'resolve' && isValidChoice(s, s.pending[0], action.choice)
   switch (action.type) {
     case 'playCard':
+    case 'scrap':
       return inHand(s, action.cardId)
     case 'salvage':
       return salvagePayment(s, action.railIndex) !== null
@@ -132,6 +141,7 @@ export function legalActions(state: GameState): Action[] {
   for (const card of s.hand) {
     actions.push({ type: 'playCard', cardId: card.id, side: 'resource' })
     actions.push({ type: 'playCard', cardId: card.id, side: 'action' })
+    actions.push({ type: 'scrap', cardId: card.id })
     for (const module of SUITS) {
       if (canStation(s, card.id, module)) actions.push({ type: 'station', cardId: card.id, module })
     }
@@ -186,12 +196,23 @@ export function apply(state: GameState, action: Action): GameState {
       if (action.side === 'action') runAction(s, card.rank, synced, position)
       break
     }
+    case 'scrap': {
+      // Ruling 22: not a play, so the Circuit and chaining flags are untouched.
+      const card = takeFromHand(s, action.cardId)
+      s.archive.push(card)
+      s.pool[card.suit] += 2
+      s.turnFlags.playedOrSpent = true
+      tally(s, 'scrap-run')
+      break
+    }
     case 'salvage': {
       s.pool = salvagePayment(s, action.railIndex)!
-      s.discard.push(s.rail[action.railIndex] as Card) // salvagePayment ruled out an Asteroid
+      const card = s.rail[action.railIndex] as Card // salvagePayment ruled out an Asteroid
+      s.discard.push(card)
       s.rail[action.railIndex] = null
       if (action.railIndex === 0) s.turnFlags.salvagedAirlock = true
       s.turnFlags.playedOrSpent = true
+      recordSalvage(s, action.railIndex, card.rank)
       break
     }
     case 'neutralize': {
@@ -199,6 +220,7 @@ export function apply(state: GameState, action: Action): GameState {
       const [card] = s.threat.splice(action.threatIndex, 1)
       ;(action.keep === 'archive' ? s.archive : s.discard).push(card)
       s.turnFlags.playedOrSpent = true
+      recordNeutralize(s, isAsteroid(card) ? ASTEROID_COST : cost(card.rank), action.keep === 'archive')
       break
     }
     case 'station': {
@@ -206,6 +228,7 @@ export function apply(state: GameState, action: Action): GameState {
       s.pool.crew -= cost(card.rank)
       s.modules[action.module].stationed.push(card)
       s.turnFlags.playedOrSpent = true
+      tally(s, 'recruitment-drive')
       break
     }
     case 'plot': {
@@ -213,6 +236,7 @@ export function apply(state: GameState, action: Action): GameState {
       s.pool.data -= cost(e.card.rank)
       e.plotted = true
       s.turnFlags.playedOrSpent = true
+      tally(s, 'signal-boost')
       break
     }
     case 'plotFromHand': {
@@ -220,6 +244,7 @@ export function apply(state: GameState, action: Action): GameState {
       s.pool.data -= cost(card.rank)
       s.course.push(card)
       s.turnFlags.playedOrSpent = true
+      tally(s, 'signal-boost')
       break
     }
     case 'recall': {
@@ -238,6 +263,7 @@ export function apply(state: GameState, action: Action): GameState {
       endTurn(s)
       break
   }
+  checkFeats(s)
   return s
 }
 

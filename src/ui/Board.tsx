@@ -1,6 +1,7 @@
 import { useState, type ReactNode, type Ref } from 'react'
-import { breachLimit, isOnline, isStaffed, JUMP_THRESHOLDS, perkActive, SUITS, type Card, type GameState, type Suit } from '../engine'
+import { breachLimit, challenge, isOnline, isStaffed, JUMP_THRESHOLDS, perkActive, SUITS, type Card, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
+import { challengeNames, challengeStatus, courseQualifies } from './challenges'
 import { MODULE_NAME, MODULE_PERK, SUIT_NAME } from './text'
 
 interface ZoneProps {
@@ -137,11 +138,15 @@ export function ModuleTile({ game, module: m, station, stationCost }: {
 
 export function Course({ game, view }: { game: GameState; view: GameState }) {
   if (game.jumps >= 3) return <p className="empty-note">All three Jumps made.</p>
-  const needed = JUMP_THRESHOLDS[game.jumps] + game.options.jumpBonus
+  const needed = JUMP_THRESHOLDS[game.jumps]
   const plotted = view.circuit.filter((e) => e.plotted).map((e) => e.card)
   const committed = [...game.course, ...plotted]
   const total = committed.reduce((sum, c) => sum + c.rank, 0)
-  const ready = total >= needed && SUITS.every((s) => committed.some((c) => c.suit === s))
+  // Plotted cards reach the Course at cleanup, so State challenges about the Course count them now.
+  const atCleanup: GameState = { ...view, course: committed }
+  const active = game.challenges[game.jumps]
+  const pending = active.filter((slot) => !challengeStatus(atCleanup, slot).complete)
+  const courseReady = courseQualifies(game, committed)
   return (
     <div className="course">
       <div className="course-progress">
@@ -155,15 +160,45 @@ export function Course({ game, view }: { game: GameState; view: GameState }) {
         </span>
       </div>
       <p className="muted">
-        {ready
+        {courseReady && pending.length === 0
           ? `Ready: you Jump at the end of this turn (Jump ${game.jumps + 1}).`
-          : `Jump ${game.jumps + 1} needs every suit and ${needed}+ total rank.`}
+          : courseReady
+            ? `The Course is ready. Jump ${game.jumps + 1} still needs ${challengeNames(pending)}.`
+            : `Jump ${game.jumps + 1} needs every suit, ${needed}+ total rank and ${active.length > 1 ? 'both its challenges' : 'its challenge'}.`}
         {plotted.length > 0 && ` Includes ${plotted.length} plotted this turn.`}
       </p>
       <div className="row course-cards">
         {game.course.map((card) => <CardView key={card.id} card={card} size="xs" />)}
       </div>
+      <Challenges game={game} atCleanup={atCleanup} />
     </div>
+  )
+}
+
+/** The challenges dealt for each Jump. Only the next Jump's track progress. */
+function Challenges({ game, atCleanup }: { game: GameState; atCleanup: GameState }) {
+  return (
+    <ol className="challenges" aria-label="Jump challenges">
+      {game.challenges.map((slots, jump) => {
+        const state = jump < game.jumps ? 'made' : jump === game.jumps ? 'active' : 'later'
+        return (
+          <li key={jump} className="challenge-leg" data-state={state}>
+            <span className="challenge-jump">Jump {jump + 1}</span>
+            {slots.map((slot) => {
+              const info = challenge(slot.key)
+              const status = state === 'active' ? challengeStatus(atCleanup, slot) : null
+              return (
+                <div key={slot.key} className="challenge" data-complete={status?.complete ?? state === 'made'}>
+                  <b className="challenge-name">{info.name}</b>
+                  <span className="challenge-text">{info.text}</span>
+                  {status && <span className="challenge-status">{status.detail}</span>}
+                </div>
+              )
+            })}
+          </li>
+        )
+      })}
+    </ol>
   )
 }
 

@@ -24,7 +24,7 @@ npm run dev         # Vite dev server
 | --- | --- |
 | `docs/engine-spec.md` | State shape, actions, turn sequence and rulings. The source of truth for the engine. |
 | `src/engine/` | Pure TypeScript rules engine: `newGame`, `legalActions`, `apply`, `previewPlay` in `engine.ts`; shared queries in `rules.ts`, card actions and decisions in `effects.ts`, end of turn in `turn.ts`. No UI imports. |
-| `src/engine/__tests__/` | Vitest specs, one file per area (setup, chaining, actions, spending, end of turn, jumps), plus bot playthroughs. |
+| `src/engine/__tests__/` | Vitest specs, one file per area (setup, chaining, actions, Scrap, spending, end of turn, jumps, challenges), plus bot playthroughs. |
 | `docs/legacy/legacy-spec.md` | Rules and data model for the Legacy campaign (in progress). |
 | `src/legacy/` | Legacy campaign: records shaped like Rails tables, pure campaign functions, and the IndexedDB store behind a swappable `LegacyStore` interface. Tests in `src/legacy/__tests__/`. |
 | `src/ui/legacy/` | Campaign screen, the legacy app shell, and hooks that queue every write to the store in order. |

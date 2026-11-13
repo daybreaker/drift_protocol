@@ -47,7 +47,7 @@ ACTIONS = {
     1: ("SCROUNGE", "Gain 1 of any resource.", "Gain 2 instead."),
     2: ("PATCH", "Neutralizing costs 2 less this turn.", "Also move the top Breach card to the bottom of the Yard deck."),
     3: ("SCAN", "Look at your top 3 cards. Discard any; return the rest in any order.", "Then draw 1."),
-    4: ("JETTISON", "Archive 1 card from hand or discard. Gain 1 Power.", "Up to 2 cards, 1 Power each."),
+    4: ("JETTISON", "Archive up to 2 cards from hand or discard. Gain 2 of each card's resource.", "Up to 3 cards."),
     5: ("RECRUIT", "Draw 2 cards.", "Draw 3 cards instead."),
     6: ("TRACTOR BEAM", "Salvage 1 Cargo Rail card for 2 less. Put it on top of your deck.", "Put it in your hand instead."),
     7: ("DOCK", "Station a card from your hand at a Module for free.", "That Module produces right now."),

@@ -36,9 +36,9 @@ describe('Jump check at cleanup', () => {
     expect(s.jumps).toBe(0)
   })
 
-  it('Veteran adds 5 to each threshold', () => {
-    const s = end(board({ course: course14, options: { breachLimit: 4, jumpBonus: 5 } }))
-    expect(s.jumps).toBe(0)
+  it('Veteran uses the same thresholds (Ruling 24)', () => {
+    const s = end(board({ course: course14, options: { breachLimit: 4 } }))
+    expect(s.jumps).toBe(1)
   })
 })
 

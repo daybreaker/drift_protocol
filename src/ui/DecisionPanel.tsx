@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { isAsteroid, isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type FieldCard, type GameState, type Suit } from '../engine'
+import { challenge, isAsteroid, isLegal, salvageCost, SUITS, type Action, type Card, type Decision, type DecisionChoice, type FieldCard, type GameState, type Suit } from '../engine'
 import { CardView, SuitIcon } from './Card'
-import { actionName, cardName, MODULE_NAME, railLeftToRight, SUIT_NAME } from './text'
+import { actionName, cardName, listAmounts, MODULE_NAME, railLeftToRight, SUIT_NAME } from './text'
 
 interface Props {
   game: GameState
@@ -27,6 +27,7 @@ export function DecisionPanel({ game, act }: Props) {
       {decision.kind === 'engineer' && <Engineer key={key} decision={decision} {...props} />}
       {decision.kind === 'log1' && <Log1 key={key} {...props} />}
       {decision.kind === 'log2' && <Log2 key={key} {...props} />}
+      {decision.kind === 'redeal' && <Redeal key={key} {...props} />}
     </section>
   )
 }
@@ -169,7 +170,7 @@ function ChooseCards({ game, decision, resolve, valid }: FormProps<'chooseCards'
   return (
     <>
       {jettison ? (
-        <Prompt title="Jettison">Archive {upTo} from your hand or discard pile. Each one gives 1 Power.</Prompt>
+        <Prompt title="Jettison">Archive {upTo} from your hand or discard pile. Each one gives 2 of its own resource.</Prompt>
       ) : (
         <Prompt title="Navigator">Plot {upTo} from the Circuit or your discard pile into the Course, with no Data.</Prompt>
       )}
@@ -178,8 +179,38 @@ function ChooseCards({ game, decision, resolve, valid }: FormProps<'chooseCards'
         <button type="button" className="btn btn-primary" disabled={!valid(choice)} onClick={() => resolve(choice)}>
           {picked.length === 0
             ? jettison ? 'Archive nothing' : 'Plot nothing'
-            : jettison ? `Archive ${picked.length}, gain ${picked.length} Power` : `Plot ${picked.length}`}
+            : jettison ? `Archive ${picked.length}, gain ${jettisonGain(game, picked)}` : `Plot ${picked.length}`}
         </button>
+      </div>
+    </>
+  )
+}
+
+/** "2 Data and 2 Power" for the picked cards. */
+function jettisonGain(game: GameState, ids: string[]): string {
+  const gains = { power: 0, crew: 0, data: 0, shields: 0 }
+  for (const card of [...game.hand, ...game.discard]) if (ids.includes(card.id)) gains[card.suit] += 2
+  return listAmounts(gains)
+}
+
+/** Cadet setup: swap one dealt challenge for the top of the challenge deck. */
+function Redeal({ game, resolve }: { game: GameState; resolve: (c: DecisionChoice) => void }) {
+  return (
+    <>
+      <Prompt title="Jump challenges">
+        Each Jump also needs its challenge. As a Cadet you may redeal one of them: it is replaced by the next challenge from the deck, sight unseen.
+      </Prompt>
+      <div className="log-options">
+        {game.challenges.map((slots, jump) => (
+          <div key={jump} className="log-option">
+            <h3>Jump {jump + 1}: {slots.map((x) => challenge(x.key).name).join(' and ')}</h3>
+            <p>{slots.map((x) => challenge(x.key).text).join(' ')}</p>
+            <button type="button" className="btn" onClick={() => resolve({ kind: 'redeal', jump })}>Redeal this one</button>
+          </div>
+        ))}
+      </div>
+      <div className="decision-actions">
+        <button type="button" className="btn btn-primary" onClick={() => resolve({ kind: 'redeal', jump: null })}>Keep all three</button>
       </div>
     </>
   )

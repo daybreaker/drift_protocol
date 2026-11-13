@@ -1,5 +1,6 @@
 // Card actions and the decisions they wait on. Like rules.ts, these mutate a draft.
 import { yieldOf } from './cards'
+import { newSlot, recordSalvage, tally } from './challenges'
 import { IllegalActionError } from './errors'
 import { canStationAt, draw, production, reshuffle, salvagePayment, takeFromHand } from './rules'
 import { isAsteroid, SUITS, type Card, type Decision, type DecisionChoice, type GameState } from './types'
@@ -22,7 +23,10 @@ export function runAction(s: GameState, rank: number, sync: boolean, position: n
       break
     case 2:
       s.turnFlags.patchDiscount += 2
-      if (sync && s.breach.length > 0) s.yard.push(s.breach.pop()!)
+      if (sync && s.breach.length > 0) {
+        s.yard.push(s.breach.pop()!)
+        if (!preview) tally(s, 'hull-repair')
+      }
       break
     case 3: {
       if (preview) break
@@ -34,7 +38,7 @@ export function runAction(s: GameState, rank: number, sync: boolean, position: n
       break
     }
     case 4:
-      ask({ kind: 'chooseCards', purpose: 'jettison', max: sync ? 2 : 1 })
+      ask({ kind: 'chooseCards', purpose: 'jettison', max: sync ? 3 : 2 })
       break
     case 5:
       drawN(sync ? 3 : 2)
@@ -107,6 +111,11 @@ export function isValidChoice(s: GameState, d: Decision, choice: DecisionChoice)
       if (choice.kind !== d.kind) return false
       if (choice.option === 'B') return validPicks(s, 'log2', choice.archive, 3)
       return choice.railIndices[0] !== choice.railIndices[1] && choice.railIndices.every((i) => takeable(s, i))
+    case 'redeal':
+      return (
+        choice.kind === d.kind &&
+        (choice.jump === null || (Number.isInteger(choice.jump) && !!s.challenges[choice.jump]?.length && s.challengeDeck.length > 0))
+      )
   }
 }
 
@@ -134,8 +143,10 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
       const purpose = (d as DecisionOf<'chooseCards'>).purpose
       for (const id of choice.cardIds) {
         if (purpose === 'jettison') {
-          s.archive.push(takeFromHandOrDiscard(s, id))
-          s.pool.power += 1
+          const card = takeFromHandOrDiscard(s, id)
+          s.archive.push(card)
+          s.pool[card.suit] += 2
+          tally(s, 'scrap-run')
         } else {
           const e = s.circuit.find((x) => x.card.id === id && !x.plotted)
           if (e) e.plotted = true
@@ -150,6 +161,7 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
       const card = s.rail[choice.railIndex] as Card // salvagePayment ruled out an Asteroid
       s.rail[choice.railIndex] = null
       if (choice.railIndex === 0) s.turnFlags.salvagedAirlock = true
+      recordSalvage(s, choice.railIndex, card.rank)
       if ((d as DecisionOf<'tractorBeam'>).toHand) s.hand.push(card)
       else s.deck.unshift(card)
       break
@@ -157,6 +169,7 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
     case 'dock': {
       if (choice.cardId === null) break
       s.modules[choice.module].stationed.push(takeFromHand(s, choice.cardId))
+      tally(s, 'recruitment-drive')
       if ((d as DecisionOf<'dock'>).produceNow) s.pool[choice.module] += production(s, choice.module)
       break
     }
@@ -167,7 +180,10 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
     }
     case 'log1':
       if (choice.option === 'A') s.modules[choice.module].capacity = 2
-      else s.yard.push(...s.breach.splice(0))
+      else {
+        tally(s, 'hull-repair', s.breach.length)
+        s.yard.push(...s.breach.splice(0))
+      }
       s.logs.log1 = choice.option
       break
     case 'log2':
@@ -178,8 +194,13 @@ export function resolveDecision(s: GameState, choice: DecisionChoice): void {
         }
       } else {
         for (const id of choice.archive) s.archive.push(takeFromHandOrDiscard(s, id))
+        tally(s, 'scrap-run', choice.archive.length)
       }
       s.logs.log2 = choice.option
+      break
+    case 'redeal':
+      // The replaced challenge leaves the game.
+      if (choice.jump !== null) s.challenges[choice.jump][0] = newSlot(s.challengeDeck.shift()!)
       break
   }
 }
@@ -244,6 +265,8 @@ export function choicesFor(s: GameState, d: Decision): DecisionChoice[] {
           ...subsets(candidates(s, 'log2').map((c) => c.id), 3).map((archive) => ({ kind: d.kind, option: 'B' as const, archive })),
         ]
       }
+      case 'redeal':
+        return [{ kind: d.kind, jump: null }, ...s.challenges.map((_, jump) => ({ kind: d.kind, jump }))]
     }
   })()
   return all.filter((choice) => isValidChoice(s, d, choice))

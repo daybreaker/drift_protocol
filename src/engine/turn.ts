@@ -1,11 +1,13 @@
 // End of turn: Impact, Drift, Cleanup (with the Jump check), then the next turn's Systems Online.
 // Mutates a draft, like rules.ts.
 import { cost, JUMP_THRESHOLDS } from './cards'
+import { challengesComplete } from './challenges'
 import { breachLimit, draw, emptyPool, freshTurnFlags, isStaffed, perkActive, systemsOnline } from './rules'
 import { isAsteroid, SUITS, type FieldCard, type GameState } from './types'
 
 export function endTurn(s: GameState): void {
   // Impact
+  const hits = s.threat.length
   s.breach.push(...s.threat.splice(0))
   if (s.breach.length >= breachLimit(s)) {
     s.outcome = { result: 'lost', reason: 'breach' }
@@ -39,7 +41,7 @@ export function endTurn(s: GameState): void {
   s.circuit = []
   s.discard.push(...s.hand.splice(0))
   draw(s, perkActive(s, 'crew') ? 6 : 5)
-  jumpCheck(s)
+  jumpCheck(s, hits)
 
   s.turn += 1
   s.pool = emptyPool()
@@ -47,10 +49,11 @@ export function endTurn(s: GameState): void {
   if (!s.outcome) systemsOnline(s)
 }
 
-function jumpCheck(s: GameState): void {
-  const needed = JUMP_THRESHOLDS[s.jumps] + s.options.jumpBonus
+/** `hits`: hazards that hit at Impact this turn, for Quiet Sky. */
+function jumpCheck(s: GameState, hits: number): void {
   const total = s.course.reduce((sum, c) => sum + c.rank, 0)
-  if (!SUITS.every((suit) => s.course.some((c) => c.suit === suit)) || total < needed) return
+  if (!SUITS.every((suit) => s.course.some((c) => c.suit === suit)) || total < JUMP_THRESHOLDS[s.jumps]) return
+  if (!challengesComplete(s, hits)) return
 
   s.archive.push(...s.course.splice(0), ...s.threat.splice(0))
   s.jumps += 1

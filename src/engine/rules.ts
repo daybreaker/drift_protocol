@@ -14,6 +14,8 @@ export function freshTurnFlags(): TurnFlags {
     salvagedAirlock: false,
     playedOrSpent: false,
     production: emptyPool(),
+    salvages: 0,
+    neutralizes: 0,
   }
 }
 

@@ -93,34 +93,43 @@ describe('3 Scan', () => {
 })
 
 describe('4 Jettison', () => {
-  it('Archives 1 chosen card from hand or discard and gains 1 Power', () => {
+  it('Archives up to 2 chosen cards from hand or discard and gains 2 of each card\'s resource', () => {
     const card = c('crew', 4)
     const junk = c('data', 1)
-    let s = play(state({ hand: [card, junk] }), card, 'action')
-    expect(s.pending).toEqual([{ kind: 'chooseCards', purpose: 'jettison', max: 1 }])
-    s = resolve(s, { kind: 'chooseCards', cardIds: [junk.id] })
-    expect(s.archive).toEqual([junk])
-    expect(s.pool.power).toBe(1)
+    let s = play(state({ hand: [card, junk], discard: [c('shields', 2)] }), card, 'action')
+    expect(s.pending).toEqual([{ kind: 'chooseCards', purpose: 'jettison', max: 2 }])
+    s = resolve(s, { kind: 'chooseCards', cardIds: [junk.id, 'shields-02'] })
+    expect(s.archive.map((x) => x.id)).toEqual([junk.id, 'shields-02'])
+    expect(s.pool).toEqual(pool({ data: 2, shields: 2 }))
   })
 
   it('may Archive nothing', () => {
     const card = c('crew', 4)
     const s = resolve(play(state({ hand: [card] }), card, 'action'), { kind: 'chooseCards', cardIds: [] })
-    expect(s.pool.power).toBe(0)
+    expect(s.pool).toEqual(pool())
   })
 
   it('rejects more cards than allowed', () => {
     const card = c('crew', 4)
-    const s = play(state({ hand: [card], discard: [c('data', 1), c('data', 2)] }), card, 'action')
-    expect(() => resolve(s, { kind: 'chooseCards', cardIds: ['data-01', 'data-02'] })).toThrow(IllegalActionError)
+    const s = play(state({ hand: [card], discard: [c('data', 1), c('data', 2), c('data', 3)] }), card, 'action')
+    expect(() => resolve(s, { kind: 'chooseCards', cardIds: ['data-01', 'data-02', 'data-03'] })).toThrow(IllegalActionError)
   })
 
-  it('Sync: up to 2 cards, 1 Power each', () => {
+  it('Sync: up to 3 cards, 2 resources each', () => {
     const card = c('crew', 4)
-    let s = play(state({ hand: [card], discard: [c('data', 1), c('data', 2)], circuit: [entry(c('crew', 9), 'resource')] }), card, 'action')
-    s = resolve(s, { kind: 'chooseCards', cardIds: ['data-01', 'data-02'] })
-    expect(s.pool.power).toBe(2)
-    expect(s.archive).toHaveLength(2)
+    let s = play(state({ hand: [card], discard: [c('data', 1), c('data', 2), c('power', 1)], circuit: [entry(c('crew', 9), 'resource')] }), card, 'action')
+    expect(s.pending).toEqual([{ kind: 'chooseCards', purpose: 'jettison', max: 3 }])
+    s = resolve(s, { kind: 'chooseCards', cardIds: ['data-01', 'data-02', 'power-01'] })
+    expect(s.pool).toEqual(pool({ data: 4, power: 2 }))
+    expect(s.archive).toHaveLength(3)
+  })
+
+  it('is not boosted by Overdrive', () => {
+    const card = c('crew', 4)
+    const base = state({ hand: [card, c('data', 1)] })
+    let s = play(withFlags(base, { overdrive: 1 }), card, 'action')
+    s = resolve(s, { kind: 'chooseCards', cardIds: ['data-01'] })
+    expect(s.pool.data).toBe(2)
   })
 })
 
