@@ -23,7 +23,7 @@ Records mirror the tables a Rails API would have, so they can move to a server u
 | --- | --- |
 | `legacy_games` | `id`, `name`, `difficulty`, `starting_threes` (two suits, or null for Cadet), `credits`, `current_chapter_id`, `created_at`, `updated_at` |
 | `chapters` | `id`, `legacy_game_id`, `story_key`, `position` (1 = first Story), `status` (`active` \| `completed`), `started_at`, `completed_at` |
-| `sessions` | `id`, `legacy_game_id`, `chapter_id`, `attempt` (1 = first try at the chapter), `options` (the engine `GameOptions`), `status` (`in_progress` \| `won` \| `lost`), `score`, `credits_earned`, `state` (the current `GameState`), `action_count`, `undo_states`, `undo_action_ids`, `summary`, `hand_order`, `started_at`, `ended_at`, `updated_at` |
+| `sessions` | `id`, `legacy_game_id`, `chapter_id`, `attempt` (1 = first try at the chapter), `options` (the engine `GameOptions`), `status` (`in_progress` \| `won` \| `lost` \| `abandoned`), `score`, `credits_earned`, `state` (the current `GameState`), `action_count`, `undo_states`, `undo_action_ids`, `summary`, `hand_order`, `started_at`, `ended_at`, `updated_at` |
 | `actions` | `id`, `legacy_game_id`, `chapter_id`, `session_id`, `seq` (1, 2, 3… within the session), `turn`, `action` (the engine `Action`), `created_at`, `undone_at` |
 
 - A chapter record exists only once its Story is unlocked. Stories themselves are content in code (`src/legacy/stories.ts`), keyed by `story_key`.
@@ -51,12 +51,13 @@ mergeChanges(campaign, changes) → Campaign                 // the campaign wit
 - **Won:** the score becomes Credits, the chapter is completed, and the next Story's chapter (if one exists) is created and becomes current.
 - **Lost:** no Credits; the chapter stays current and the next Session is attempt + 1.
 - Leaving a Session keeps it in progress; it can be continued later.
+- **Abandoned:** a Session that can no longer be played (Ruling 3). No Credits; the chapter stays current and the next Session is attempt + 1.
 
 ## Stories
 
 | Position | `story_key` | Title | Content |
 | --- | --- | --- | --- |
-| 1 | `salvage-rights` | Salvage Rights | The base game, Asteroids included. |
+| 1 | `salvage-rights` | Salvage Rights | The base game, Asteroids and Jump challenges included. |
 
 ## Changes to the base engine *(Draft)*
 
@@ -69,3 +70,4 @@ Kept as small as possible. A base game uses none of them and behaves exactly as 
 
 1. Difficulty and starting 3s are chosen once, when the campaign is created, and apply to every Session.
 2. Undo works as in the base game, within the current turn. An undone action stays in the log with `undone_at` set.
+3. A Session saved before the base game added Jump challenges has no challenges and can't be continued. When its campaign loads, the Session is marked `abandoned` (with `ended_at` set), and the player starts a new one.

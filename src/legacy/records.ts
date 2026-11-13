@@ -35,7 +35,7 @@ export interface SessionRecord {
   /** 1 = the first try at this chapter. */
   attempt: number
   options: GameOptions
-  status: 'in_progress' | 'won' | 'lost'
+  status: 'in_progress' | 'won' | 'lost' | 'abandoned'
   score: number | null
   credits_earned: number
   /** The current game. Authoritative; the action log is history. */

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Action } from '../../engine'
 import {
+  abandonOutdatedSessions,
   createLegacyGame,
   mergeChanges,
   openIndexedDbStore,
@@ -81,9 +82,17 @@ export function useCampaign(store: LegacyStore, legacyGameId: string) {
     store.loadCampaign(legacyGameId).then(
       (c) => {
         if (!live) return
-        latest.current = c
-        setCampaign(c)
-        if (!c) setError('That campaign could not be found.')
+        // Ruling 3: a Session saved before Jump challenges can't be continued, so it is set aside.
+        const outdated = c && abandonOutdatedSessions(c, browserCtx)
+        const loaded = c && outdated ? mergeChanges(c, outdated) : c
+        latest.current = loaded
+        setCampaign(loaded)
+        if (!loaded) setError('That campaign could not be found.')
+        if (outdated) {
+          queue.current = queue.current
+            .then(() => store.commit(outdated))
+            .catch((e) => setError(`Your last move could not be saved: ${String(e)}`))
+        }
       },
       (e) => live && setError(`The campaign could not be loaded: ${String(e)}`),
     )

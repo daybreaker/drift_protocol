@@ -7,7 +7,8 @@ export function CampaignScreen({ campaign, error, play, leave }: { campaign: Cam
   const chapter = currentChapter(campaign)
   const story = storyByKey(chapter.story_key)
   const active = activeSession(campaign)
-  const attempts = sessions.filter((s) => s.chapter_id === chapter.id).length
+  const tries = sessions.filter((s) => s.chapter_id === chapter.id)
+  const attempts = tries.length
   const finished = chapter.status === 'completed'
 
   return (
@@ -28,6 +29,8 @@ export function CampaignScreen({ campaign, error, play, leave }: { campaign: Cam
           <p className="muted">You have finished every Story written so far. New Stories will appear here as they are added.</p>
         ) : active ? (
           <p className="muted">Session {active.attempt} is in progress, on turn {active.state.turn} with {active.state.jumps} of 3 Jumps made.</p>
+        ) : tries.at(-1)?.status === 'abandoned' ? (
+          <p className="muted">Your last Session was dealt before Jump challenges were added, so it was set aside. Start a new one to play with them.</p>
         ) : attempts > 0 ? (
           <p className="muted">The last Session was lost. Start another to try this Story again.</p>
         ) : null}
@@ -65,6 +68,7 @@ function LogRow({ campaign, session }: { campaign: Campaign; session: SessionRec
   const result =
     session.status === 'won' ? `Won, ${session.score} points`
     : session.status === 'lost' ? `Lost on turn ${session.state.turn}`
+    : session.status === 'abandoned' ? 'Set aside: dealt under older rules'
     : `In progress, turn ${session.state.turn}`
   return (
     <tr>

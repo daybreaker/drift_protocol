@@ -144,6 +144,17 @@ export function currentChapter(campaign: Campaign): ChapterRecord {
   return campaign.chapters.find((c) => c.id === campaign.legacyGame.current_chapter_id)!
 }
 
+/** Whether a Session's saved game has Jump challenges, so the current engine can play it (Ruling 3). */
+export const isPlayable = (session: SessionRecord): boolean => Array.isArray(session.state.challenges)
+
+/** Marks in-progress Sessions saved under older rules as abandoned. Null when there are none. */
+export function abandonOutdatedSessions(campaign: Campaign, ctx: Ctx): Changes | null {
+  const outdated = campaign.sessions.filter((s) => s.status === 'in_progress' && !isPlayable(s))
+  if (outdated.length === 0) return null
+  const now = ctx.now()
+  return { sessions: outdated.map((s) => ({ ...s, status: 'abandoned' as const, undo_states: [], undo_action_ids: [], ended_at: now, updated_at: now })) }
+}
+
 /** The Session in progress for the current chapter, if there is one. */
 export function activeSession(campaign: Campaign): SessionRecord | undefined {
   return campaign.sessions.find((s) => s.chapter_id === campaign.legacyGame.current_chapter_id && s.status === 'in_progress')

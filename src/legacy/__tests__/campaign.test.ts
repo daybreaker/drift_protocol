@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { apply, emptyState, IllegalActionError, legalActions, makeCard, newGame, type GameState } from '../../engine'
-import { createLegacyGame, mergeChanges, recordAction, startSession, undoAction } from '../campaign'
+import { abandonOutdatedSessions, activeSession, createLegacyGame, mergeChanges, recordAction, startSession, undoAction } from '../campaign'
 import type { Campaign, Ctx, SessionRecord } from '../records'
 
 function testCtx(): Ctx {
@@ -198,5 +198,24 @@ describe('the action log', () => {
     }
     const replayed = log.filter((l) => !l.undone).reduce((s, l) => apply(s, l.action), newGame(session.options))
     expect(replayed).toEqual(session.state)
+  })
+})
+
+describe('abandonOutdatedSessions', () => {
+  it('sets aside a Session saved before Jump challenges, so a new one can start', () => {
+    const { campaign, session, ctx } = withSession()
+    const { challenges: _, challengeDeck: __, ...oldState } = session.state
+    const old = mergeChanges(campaign, { sessions: [{ ...session, state: oldState as GameState }] })
+    const changes = abandonOutdatedSessions(old, ctx)!
+    expect(changes.sessions![0]).toMatchObject({ id: session.id, status: 'abandoned', credits_earned: 0 })
+    expect(changes.sessions![0].ended_at).not.toBeNull()
+    const after = mergeChanges(old, changes)
+    expect(activeSession(after)).toBeUndefined()
+    expect(startSession(after, ctx).sessions![0].attempt).toBe(2)
+  })
+
+  it('changes nothing when every Session can be played', () => {
+    const { campaign, ctx } = withSession()
+    expect(abandonOutdatedSessions(campaign, ctx)).toBeNull()
   })
 })
